@@ -20,6 +20,11 @@ export const moduleBarState = createSlice({
     name: "module-bar-state",
     initialState: moduleBarInitialState,
     reducers: {
+
+        setModules: (state, action: PayloadAction<BarModule[]>) => {
+            state.modules = action.payload
+        },
+
         addModule: (state, action: PayloadAction<string>) => {
             const n = state.modules.length
             state.modules.push({name: `${action.payload} ${n + 1}`})
@@ -32,7 +37,7 @@ export const moduleBarStore = configureStore({
     //middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false })
 })
 
-export const { addModule } = moduleBarState.actions
+export const { setModules, addModule } = moduleBarState.actions
 
 export const dispatch = moduleBarStore.dispatch
 

@@ -1,11 +1,12 @@
-import { ModuleBarThunk } from "./module-bar-state";
-import ModuleBarTransitions from "./module-bar-transitions";
+import EditorApi from "../../editor-api"
+import { ModuleBarThunk } from "./module-bar-state"
+import * as ModuleBarState from "./module-bar-state"
 
 const ModuleBarThunks = {
 
-    /** This is an example of a thunk, you can make async/await calls mostly to APIs to update the store. */
-    addModule: (): ModuleBarThunk => (dispatch, getState) => {
-        ModuleBarTransitions.addModule()
+    getModules: (): ModuleBarThunk => async (dispatch) => {
+        const modules = await EditorApi.getBarModules()
+        dispatch(ModuleBarState.setModules(modules))
     }
 }
 
