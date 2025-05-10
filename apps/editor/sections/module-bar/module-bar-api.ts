@@ -1,9 +1,10 @@
-import ModuleBarTransitions from "./module-bar-transitions"
+import { useModuleBarState } from "./module-bar-state"
 
 const ModuleBarApi = {
 
     addModule: () => 
-        ModuleBarTransitions.addModule()
+        useModuleBarState.getState().addModule(),
+
 }
 
 export default ModuleBarApi

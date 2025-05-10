@@ -1,45 +1,33 @@
-import { Action, configureStore, createSlice, PayloadAction, ThunkAction } from "@reduxjs/toolkit"
+import { create } from "zustand"
 import { BarModule } from "./module-bar-dsl"
-import { useSelector } from "react-redux"
+import { persist, createJSONStorage } from 'zustand/middleware'
+import EditorBackendApi from "../../editor-backend-api"
 
-export interface ModuleBarState {
+export type ModuleBarState = {
     modules: BarModule[]
+
+    addModule: () => void
+    loadModules: () => void
 }
 
-export type ModuleBarStoreState =
-    ReturnType<typeof moduleBarStore.getState> // Includes Thunks Middleware
+export const useModuleBarState = create<ModuleBarState>()(persist((set, get) => ({
 
-export type ModuleBarThunk<ReturnType = void> = 
-    ThunkAction<ReturnType, ModuleBarStoreState, unknown, Action<string>>
+    modules: [] as BarModule[],
 
-const moduleBarInitialState: ModuleBarState = {
-    modules: [],
-}
-
-export const moduleBarState = createSlice({
-    name: "module-bar-state",
-    initialState: moduleBarInitialState,
-    reducers: {
-
-        setModules: (state, action: PayloadAction<BarModule[]>) => {
-            state.modules = action.payload
-        },
-
-        addModule: (state, action: PayloadAction<string>) => {
-            const n = state.modules.length
-            state.modules.push({name: `${action.payload} ${n + 1}`})
-        }
+    addModule: () => {
+        const n = get().modules.length
+        set((state) => ({
+            modules: [...state.modules, { name: `Mod ${n + 1}` }]
+        }))
     },
-})
 
-export const moduleBarStore = configureStore({
-    reducer: moduleBarState.reducer,
-    //middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false })
-})
-
-export const { setModules, addModule } = moduleBarState.actions
-
-export const dispatch = moduleBarStore.dispatch
-
-export const useModuleBarSelector = <Selection = unknown>(selector: (state: ModuleBarState) => Selection) => 
-    useSelector<ModuleBarState, Selection>(selector)
+    loadModules: async () => {
+        const modules = await EditorBackendApi.getBarModules()
+        set({modules})
+    },
+}),
+{
+    name: "editor/module-bar-storage", // name of the item in the storage (must be unique)
+    storage: createJSONStorage(() => sessionStorage), // (optional) by default the 'localStorage' is used
+}
+))
