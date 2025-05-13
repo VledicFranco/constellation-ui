@@ -1,23 +1,14 @@
 import ExplorerPanel from './components/explorer-panel';
 import ExplorerToggleButton from './components/explorer-toggle-button';
 
-import { useDisclosure } from '@heroui/react';
+import { useModuleExplorerState } from './module-explorer-state';
 
 export default function ModuleExplorerView() {
 
-    const { 
-        isOpen: isShown,
-        onOpen: open,
-        onClose: close 
-    } = useDisclosure();
-
-    const toggle = () => {
-        console.log('toggle')
-        isShown ? close() : open()
-    }
+    const state = useModuleExplorerState((state) => state)
 
     return <>
-        <ExplorerToggleButton position='top-right' onClick={toggle} />
-        {isShown && <ExplorerPanel />}
+        <ExplorerToggleButton position='top-right' onClick={state.togglePanel} />
+        {state.panelShown && <ExplorerPanel modules={state.modules} />}
     </>
 }
