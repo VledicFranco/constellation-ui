@@ -1,3 +1,3 @@
 import { ModuleNodeSpec } from "@/apps/common/dag-dsl"
 
-export type BarModule = ModuleNodeSpec
+export type ExplorersModule = ModuleNodeSpec

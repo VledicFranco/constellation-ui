@@ -1,22 +1,27 @@
 import { create } from "zustand"
-import { BarModule } from "./module-bar-dsl"
+import { ExplorersModule } from "./module-explorer-dsl"
 import { persist, createJSONStorage } from 'zustand/middleware'
 import EditorBackendApi from "../../editor-backend-api"
-import { StubModules } from "@/apps/common/stubs"
 
-export type ModuleBarState = {
-    modules: BarModule[]
-
+export type ModuleExplorerState = {
+    modules: ExplorersModule[]
+    panelShown: boolean
     loadModules: () => void
+    togglePanel: () => void
 }
 
-export const useModuleBarState = create<ModuleBarState>()(persist((set, get) => ({
+export const useModuleExplorerState = create<ModuleExplorerState>()(persist((set, get) => ({
 
-    modules: StubModules() as BarModule[],
+    modules: [],
+    panelShown: false,
 
     loadModules: async () => {
         const modules = await EditorBackendApi.getBarModules()
         set({modules})
+    },
+
+    togglePanel: () => {
+        set((state) => ({ panelShown: !state.panelShown }))
     },
 }),
 {

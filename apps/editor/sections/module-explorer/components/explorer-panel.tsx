@@ -1,20 +1,29 @@
+import { Key, useEffect } from "react"
+import { useModuleExplorerState } from "../module-explorer-state"
+
 import { Autocomplete, AutocompleteItem } from "@heroui/autocomplete";
 import { Card, CardBody, CardFooter, CardHeader, Divider, Link } from "@heroui/react";
 import { Panel } from "@xyflow/react";
 import { CSSProperties, useState } from "react";
+import { ExplorersModule } from "../module-explorer-dsl";
 
-const modules = [
-    { name: "Whale", key: "whale", description: "Diverse group of fully aquatic placental marine mammals" },
-    { name: "Otter", key: "otter", description: "A carnivorous mammal in the subfamily Lutrinae" },
-    { name: "Crocodile", key: "crocodile", description: "A large semiaquatic reptile" },
-];
+const useInitialModuleBarLoader = () => {
+    const loadModules = useModuleExplorerState((state) => state.loadModules)
+    useEffect(() => {
+        loadModules()
+    }, [])
+}
 
-export default function ModuleExplorer() {
+export default function ExplorerPanel() {
 
-    const [selectedModule, setSelectedModule] = useState(null);
+    //useInitialModuleBarLoader()
 
-    const onModuleSelectionChange = (key: String | null) => {
-        const selected = modules.find((module) => module.key === key);
+    const modules = useModuleExplorerState((state) => state.modules)
+
+    const [selectedModule, setSelectedModule] = useState<ExplorersModule | null | undefined>(null);
+
+    const onModuleSelectionChange = (key: Key | null) => {
+        const selected = modules.find((module) => module.name === key);
         setSelectedModule(selected);
     };
 
@@ -33,7 +42,7 @@ export default function ModuleExplorer() {
                 <Autocomplete size="sm" label="Modules" placeholder="Search for your module"
                     onSelectionChange={onModuleSelectionChange}>
                     {modules.map((animal) => (
-                        <AutocompleteItem key={animal.key}>{animal.name}</AutocompleteItem>
+                        <AutocompleteItem key={animal.name}>{animal.name}</AutocompleteItem>
                     ))}
                 </Autocomplete>
             </div>
@@ -59,6 +68,18 @@ export default function ModuleExplorer() {
                 </div>
             )}
         </Panel>
-
     );
 }
+
+
+/*
+const ModuleExplorerView = ({ className }: { className?: string }) => {
+    useInitialModuleBarLoader() 
+    const modules = useModuleBarState((state) => state.modules)
+    return <div className={className}>
+        {modules.map((module) =>
+            <ModuleItem key={module.name} module={module} />
+        )}
+    </div>
+}
+*/
