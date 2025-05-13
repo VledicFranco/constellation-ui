@@ -9,7 +9,7 @@ import {
 import '@xyflow/react/dist/style.css';
 
 import { useRef } from "react";
-import ModulesControls, { ModuleTypes } from './components/modules-controls';
+import ModulesControls from './components/modules-controls';
 import ModulesExplorer from './components/module-explorer';
 
 import { useDisclosure } from '@heroui/react';
@@ -32,7 +32,7 @@ export default function GraphAreaView() {
 
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
 
-    const f = (_mT: ModuleTypes) => { showModulesExplorer ? closeModulesExplorer() : openModulesExplorer(); }
+    const f = () => { showModulesExplorer ? closeModulesExplorer() : openModulesExplorer(); }
 
     return (
         <div className="border-gray-300 border-1 rounded-md" style={{ width: '99vw', height: '89vh' }} ref={reactFlowWrapper}>

@@ -17,16 +17,14 @@ export type ModulesControlsProperties = {
      */
     orientation?: 'horizontal' | 'vertical';
 
-    onButtonClick: (moduleType: ModuleTypes) => void;
+    onButtonClick: () => void;
 }
-
-export type ModuleTypes = | 'retriever' | 'model' | 'algorithm';
 
 export default function ModulesControls({
     position = 'bottom-left',
     orientation = 'vertical',
     'aria-label': ariaLabel = 'module explorer cog',
-    onButtonClick = (moduleType) => { alert('Something magical just happened. ' + moduleType); }
+    onButtonClick = () => { alert('Something magical just happened.'); }
 }: ModulesControlsProperties) {
 
     const orientationClass = orientation === 'horizontal' ? 'horizontal' : 'vertical';
@@ -40,7 +38,7 @@ export default function ModulesControls({
                 <ControlButton
                     title='explore retrievers'
                     aria-label='explore retrievers'
-                    onClick={() => onButtonClick('retriever')}
+                    onClick={() => onButtonClick()}
                     style={{ width: '40px', height: '40px' } as CSSProperties}>
                     <Cog style={{ fill: 'none', maxWidth: '20px', maxHeight: '20px' } as CSSProperties} />
                 </ControlButton>
