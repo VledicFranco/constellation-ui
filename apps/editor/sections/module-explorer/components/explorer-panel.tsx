@@ -14,11 +14,13 @@ const useInitialModuleBarLoader = () => {
     }, [])
 }
 
-export default function ExplorerPanel() {
+interface ExplorerPanelProperties {
+    modules: ExplorersModule[]
+}
+
+export default function ExplorerPanel({ modules }: ExplorerPanelProperties) {
 
     //useInitialModuleBarLoader()
-
-    const modules = useModuleExplorerState((state) => state.modules)
 
     const [selectedModule, setSelectedModule] = useState<ExplorersModule | null | undefined>(null);
 
