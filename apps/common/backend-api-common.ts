@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosResponse, Method } from "axios"
+import axios, { AxiosResponse, Method } from "axios"
 import urljoin from "url-join"
 import { v4 } from "uuid"
 

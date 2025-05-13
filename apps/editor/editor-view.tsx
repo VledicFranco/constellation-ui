@@ -1,10 +1,11 @@
 import { GraphAreaView } from "./sections/graph-area"
-import { ModuleBarView } from "./sections/module-bar"
+import { ModuleExplorerView } from "./sections/module-explorer"
 
 const EditorView = () => 
     <section className="flex gap-4">
-        <ModuleBarView />
-        <GraphAreaView />
+        <GraphAreaView>
+            <ModuleExplorerView />
+        </GraphAreaView>
     </section>
 
 export default EditorView

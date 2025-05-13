@@ -1,12 +1,12 @@
-import { BarModule } from "./sections/module-bar/module-bar-dsl"
+import { ExplorersModule } from "./sections/module-explorer/module-explorer-dsl"
 import { backendRequestBuilder } from "../common/backend-api-common"
 
 const request = backendRequestBuilder("editor")
 
 const EditorBackendApi = {
 
-    async getBarModules(): Promise<BarModule[]> {
-        return (await request("get", "/bar-modules")).data.data
+    async getBarModules(): Promise<ExplorersModule[]> {
+        return (await request("get", "/explorer-modules")).data.data
     }
 }
 
