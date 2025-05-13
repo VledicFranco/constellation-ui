@@ -2,6 +2,7 @@ import { create } from "zustand"
 import { ExplorersModule } from "./module-explorer-dsl"
 import { persist, createJSONStorage } from 'zustand/middleware'
 import EditorBackendApi from "../../editor-backend-api"
+import { useEffect } from "react"
 
 export type ModuleExplorerState = {
     modules: ExplorersModule[]
@@ -29,3 +30,10 @@ export const useModuleExplorerState = create<ModuleExplorerState>()(persist((set
     storage: createJSONStorage(() => sessionStorage), // (optional) by default the 'localStorage' is used
 }
 ))
+
+export const useInitModuleExplorerState = () => {
+    const loadModules = useModuleExplorerState((state) => state.loadModules)
+    useEffect(() => {
+        loadModules()
+    }, [])
+}

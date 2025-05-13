@@ -1,4 +1,4 @@
-import { DataType, DataTypes } from "./types-dsl"
+import { DataType } from "./types-dsl"
 
 export type DataNodeSpec 
     = {
