@@ -1,7 +1,8 @@
 import { ControlButton, Panel, PanelPosition } from "@xyflow/react";
-import { Brain, Cog, Grab } from "lucide-react";
+import { Cog } from "lucide-react";
 
 import cc from 'classcat';
+import React, { CSSProperties } from "react";
 
 export type ModulesControlsProperties = {
     position?: PanelPosition;
@@ -15,38 +16,31 @@ export type ModulesControlsProperties = {
      * @default 'vertical'
      */
     orientation?: 'horizontal' | 'vertical';
+
+    onButtonClick: () => void;
 }
 
 export default function ModulesControls({
     position = 'bottom-left',
     orientation = 'vertical',
-    'aria-label': ariaLabel = 'React Flow controls', }: ModulesControlsProperties) {
+    'aria-label': ariaLabel = 'module explorer cog',
+    onButtonClick = () => { alert('Something magical just happened.'); }
+}: ModulesControlsProperties) {
 
     const orientationClass = orientation === 'horizontal' ? 'horizontal' : 'vertical';
 
     return (
         <>
             <Panel
-                className={cc(['react-flow__controls', orientationClass])}
+                className={cc([orientationClass, 'border-gray-300 border-1 rounded-sm w-60'])}
                 position={position}
                 aria-label={ariaLabel}>
                 <ControlButton
                     title='explore retrievers'
                     aria-label='explore retrievers'
-                    onClick={() => { alert('Something magical just happened. ✨'); }}>
-                    <Grab />
-                </ControlButton>
-                <ControlButton
-                    title='explore models'
-                    aria-label='explore models'
-                    onClick={() => alert('Something magical just happened. ✨')}>
-                    <Brain />
-                </ControlButton>
-                <ControlButton
-                    title='explore the algorithms'
-                    aria-label='explore the algorithms'
-                    onClick={() => alert('Something magical just happened. ✨')}>
-                    <Cog />
+                    onClick={() => onButtonClick()}
+                    style={{ width: '40px', height: '40px' } as CSSProperties}>
+                    <Cog style={{ fill: 'none', maxWidth: '20px', maxHeight: '20px' } as CSSProperties} />
                 </ControlButton>
             </Panel>
         </>
