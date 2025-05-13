@@ -1,18 +1,18 @@
 export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
-  name: "Next.js + HeroUI",
-  description: "Make beautiful websites regardless of your design experience.",
+  name: "Constellation",
+  description: "Etsy ML Orchestration Platform.",
   navItems: [
     {
       label: "Home",
       href: "/",
     },
-    /*
     {
-      label: "Docs",
-      href: "/docs",
+      label: "Editor",
+      href: "/editor",
     },
+    /*
     {
       label: "Pricing",
       href: "/pricing",
