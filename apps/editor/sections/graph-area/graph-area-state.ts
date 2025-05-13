@@ -46,10 +46,7 @@ const dagToEdges = (dag: DagSpec): Edge[] => {
         edges.push({
             id: `${source}-${target}`,
             source,
-            target,
-            animated: true,
-            style: { stroke: '#f6ab00' },
-            type: 'smoothstep',
+            target
         });
     });
     return edges;
