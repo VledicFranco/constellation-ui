@@ -1,7 +1,8 @@
 import { create } from "zustand"
 import { StubDag } from "@/apps/common/stubs"
 import { DagSpec } from "@/apps/common/dag-dsl"
-import { Node, Edge } from "@xyflow/react"
+import { Node, Edge, NodeChange, EdgeChange, Connection } from "@xyflow/react"
+import { addEdge, applyNodeChanges, applyEdgeChanges } from '@xyflow/react';
 
 export type GraphAreaState = {
     dag: DagSpec;
@@ -9,6 +10,11 @@ export type GraphAreaState = {
     edges: Edge[];
     // Add a method to transform DAG to React Flow nodes
     transformDagToNodes: () => Node[];
+    onNodesChange: (changes: NodeChange[]) => void;
+    onEdgesChange: (changes: EdgeChange[]) => void;
+    onConnect: (connection: Connection) => void;
+    setNodes: (nodes: Node[]) => void;
+    setEdges: (edges: Edge[]) => void;
 }
 
 const dag = StubDag();
@@ -46,7 +52,10 @@ const dagToEdges = (dag: DagSpec): Edge[] => {
         edges.push({
             id: `${source}-${target}`,
             source,
-            target
+            target,
+            animated: true,
+            style: { stroke: '#f6ab00' },
+            type: 'smoothstep',
         });
     });
     return edges;
@@ -61,6 +70,27 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             const nodes = dagToNodes(get().dag);
             set({ nodes });
             return nodes;
-        }
+        },
+        onNodesChange: (changes: NodeChange[]) => {
+            set({
+                nodes: applyNodeChanges(changes, get().nodes),
+            });
+        },
+        onEdgesChange: (changes: EdgeChange[]) => {
+            set({
+                edges: applyEdgeChanges(changes, get().edges),
+            });
+        },
+        onConnect: (connection: Connection) => {
+            set({
+                edges: addEdge(connection, get().edges),
+            });
+        },
+        setNodes: (nodes: Node[]) => {
+            set({ nodes });
+        },
+        setEdges: (edges: Edge[]) => {
+            set({ edges });
+        },
     })
 );

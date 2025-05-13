@@ -14,6 +14,9 @@ import { GraphAreaState, useGraphAreaStore } from "./graph-area-state";
 const selector = (state: GraphAreaState) => ({
     nodes: state.nodes || [],
     edges: state.edges || [],
+    onNodesChange: state.onNodesChange,
+    onEdgesChange: state.onEdgesChange,
+    onConnect: state.onConnect,
 });
 
 
@@ -23,11 +26,15 @@ interface GraphAreaViewProps {
 
 export default function GraphAreaView({ children }: GraphAreaViewProps) {
 
-    const { nodes, edges } = useGraphAreaStore(useShallow(selector));
+    const { nodes, edges, onNodesChange, onEdgesChange, onConnect } = useGraphAreaStore(useShallow(selector));
 
     return (
         <div className="border-gray-300 border-1 rounded-md" style={{ width: '99vw', height: '89vh' }}>
-            <ReactFlow nodes={nodes} edges={edges}>
+            <ReactFlow nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}>
                 <Controls />
                 {children}
                 <MiniMap />
