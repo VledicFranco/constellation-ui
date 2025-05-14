@@ -15,7 +15,7 @@ export default function ExplorerToggleButton({
     orientation = "vertical",
     onClick
 }: ExplorerToggleButtonProperties) {
-    return <Panel
+    return <Panel id="explorer-toggle-button"
         className={cc([orientation, 'border-gray-300 border-1 rounded-sm w-60'])}
         position={position}
         aria-label="Module Explorer toggle button">

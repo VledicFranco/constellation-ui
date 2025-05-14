@@ -27,9 +27,9 @@ const dagToNodes = (dag: DagSpec): Node[] => {
     Object.entries(dag.modules).forEach(([uuid, module], index) => {
         nodes.push({
             id: uuid,
-            type: 'default',
-            data: { label: module.name },
-            position: { x: 250, y: index * 100 + 50 }, // Simple positioning
+            type: 'dagModule', // Make sure this matches exactly with the nodeTypes in the view
+            data: { label: module.name, id: uuid }, // Include id in data for easier access
+            position: { x: 250, y: index * 100 + 50 },
         });
     });
 
@@ -37,9 +37,9 @@ const dagToNodes = (dag: DagSpec): Node[] => {
     Object.entries(dag.data).forEach(([uuid, data], index) => {
         nodes.push({
             id: uuid,
-            type: 'input',
-            data: { label: data.name },
-            position: { x: 50, y: index * 100 + 50 }, // Simple positioning
+            type: 'dagData', // Make sure this matches exactly with the nodeTypes in the view
+            data: { label: data.name, id: uuid }, // Include id in data for easier access
+            position: { x: 50, y: index * 100 + 50 },
         });
     });
 

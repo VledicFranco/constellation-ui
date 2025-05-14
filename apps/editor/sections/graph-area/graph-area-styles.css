@@ -1,0 +1,38 @@
+/* Custom styles for ReactFlow nodes */
+.react-flow__node-dagData {
+    border: 2px solid #0062ff;
+    /* blue-500 */
+    background-color: white;
+    border-radius: 0.375rem;
+    /* md */
+    padding: 0.5rem;
+    /* p-2 */
+    min-width: 100px;
+    text-align: center;
+}
+
+.react-flow__node-dagData .node-header {
+    padding-bottom: 0.25rem;
+    /* pb-1 */
+    font-weight: 600;
+    /* semibold */
+}
+
+.react-flow__node-dagModule {
+    /* green-500 */
+    border: 2px solid #00be46;
+    background-color: white;
+    border-radius: 0.375rem;
+    /* md */
+    padding: 0.5rem;
+    /* p-2 */
+    min-width: 100px;
+    text-align: center;
+}
+
+.react-flow__node-dagModule .node-header {
+    padding-bottom: 0.25rem;
+    /* pb-1 */
+    font-weight: 600;
+    /* semibold */
+}

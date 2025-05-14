@@ -1,4 +1,3 @@
-import { v4 } from "uuid"
 import { DagSpec, DataNodeSpec, ModuleNodeSpec } from "./dag-dsl"
 import { DataTypes } from "./types-dsl"
 
@@ -49,12 +48,12 @@ export const StubModules = () => [module1, module2, module3]
 
 export const StubDag: () => DagSpec = () => {
 
-    const module1UUID = v4()
-    const module2UUID = v4()
-    const data1UUID = v4()
-    const data2UUID = v4()
-    const data3UUID = v4()
-    const data4UUID = v4()
+    const module1UUID = "module-1-fixed-uuid"
+    const module2UUID = "module-2-fixed-uuid"
+    const data1UUID = "data-1-fixed-uuid"
+    const data2UUID = "data-2-fixed-uuid"
+    const data3UUID = "data-3-fixed-uuid"
+    const data4UUID = "data-4-fixed-uuid"
 
     return {
         tag: "dag-spec",

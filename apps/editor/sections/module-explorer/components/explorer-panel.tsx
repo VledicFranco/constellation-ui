@@ -31,6 +31,7 @@ export default function ExplorerPanel({ modules }: ExplorerPanelProperties) {
 
     return (
         <Panel
+            id="explorer-panel"
             position="top-right"
             aria-label="Module Explorer"
             className="p-2 border-gray-300 border-1 rounded-md shadow-md w-60"
@@ -44,7 +45,7 @@ export default function ExplorerPanel({ modules }: ExplorerPanelProperties) {
                 <Autocomplete size="sm" label="Modules" placeholder="Search for your module"
                     onSelectionChange={onModuleSelectionChange}>
                     {modules.map((animal) => (
-                        <AutocompleteItem key={animal.name}>{animal.name}</AutocompleteItem>
+                        <AutocompleteItem id={animal.name} key={animal.name}>{animal.name}</AutocompleteItem>
                     ))}
                 </Autocomplete>
             </div>
