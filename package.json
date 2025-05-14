@@ -9,6 +9,7 @@
     "lint": "eslint --fix"
   },
   "dependencies": {
+    "@dagrejs/dagre": "^1.1.4",
     "@heroui/autocomplete": "^2.3.20",
     "@heroui/button": "2.2.19",
     "@heroui/code": "2.2.14",
