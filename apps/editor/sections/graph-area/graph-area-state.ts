@@ -134,12 +134,22 @@ export const useGraphAreaStore = create<GraphAreaState>()(
              * @returns An array of input data sources that can be safely removed because they have no other consumers
              * in the directed acyclic graph (DAG) besides the modules being removed.
              */
+
             const inputDatasToRemove = moduleInputsSources.filter((source) => {
-                const sourceHasOtherConsumers = dag.inEdges.some(([s, t]) => {
-                    return s === source && !R.isIncludedIn(t, moduleIds);
+                const isProduceByOtherModule = dag.outEdges.some(([_, target]) => {
+                    return target === source;
                 });
 
-                return !sourceHasOtherConsumers;
+                if (isProduceByOtherModule) {
+                    return false;
+                } else {
+
+                    const sourceHasOtherConsumers = dag.inEdges.some(([s, t]) => {
+                        return s === source && !R.isIncludedIn(t, moduleIds);
+                    });
+
+                    return !sourceHasOtherConsumers;
+                }
             });
 
             // we remove any edge that includes the moduleId of the module we are deleting
