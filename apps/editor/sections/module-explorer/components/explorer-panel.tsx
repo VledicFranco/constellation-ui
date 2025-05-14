@@ -1,11 +1,11 @@
 import { Key, useEffect } from "react"
 import { useModuleExplorerState } from "../module-explorer-state"
-
 import { Autocomplete, AutocompleteItem } from "@heroui/autocomplete";
-import { Card, CardBody, CardFooter, CardHeader, Divider, Link } from "@heroui/react";
+import { Card, Chip, CardBody, CardFooter, CardHeader, Divider, Link, Button } from "@heroui/react";
 import { Panel } from "@xyflow/react";
 import { CSSProperties, useState } from "react";
 import { ExplorersModule } from "../module-explorer-dsl";
+import { GraphAreaApi } from "../../graph-area";
 
 interface ExplorerPanelProperties {
     modules: ExplorersModule[]
@@ -21,6 +21,10 @@ export default function ExplorerPanel({ modules }: ExplorerPanelProperties) {
         const selected = modules.find((module) => module.name === key);
         setSelectedModule(selected);
     };
+
+    const onAddModule = () => {
+        if (selectedModule) GraphAreaApi.addModule(selectedModule)
+    }
 
     return (
         <Panel
@@ -45,20 +49,20 @@ export default function ExplorerPanel({ modules }: ExplorerPanelProperties) {
             {selectedModule && (
                 <div className="flex flex-col gap-2 mt-2 pt-2">
                     <Card className="max-w-full">
-                        <CardHeader className="flex gap-3">
-                            <div className="flex flex-col">
-                                <p className="text-md">HeroUI</p>
-                            </div>
+                        <CardHeader className="flex gap-1">
+                            {selectedModule.metadata.tags.map((tag) => (
+                                <Chip key={tag} size="sm" className="mr-2" variant="solid" color="primary">
+                                    {tag}
+                                </Chip>
+                            ))}
                         </CardHeader>
                         <Divider />
                         <CardBody>
-                            <p>Make beautiful websites regardless of your design experience.</p>
+                            <p>{selectedModule.metadata.description}</p>
                         </CardBody>
                         <Divider />
                         <CardFooter>
-                            <Link isExternal showAnchorIcon href="https://github.com/heroui-inc/heroui">
-                                Visit source code on GitHub.
-                            </Link>
+                            <Button color="success" variant="bordered" onPress={onAddModule}>Add Module</Button>
                         </CardFooter>
                     </Card>
                 </div>

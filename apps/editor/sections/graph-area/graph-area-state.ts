@@ -1,11 +1,11 @@
 import { create } from "zustand"
 import * as R from 'remeda';
-import { StubDag } from "@/apps/common/stubs"
-import { DagSpec } from "@/apps/common/dag-dsl"
+import { DagSpec, DataNodeSpec, emptyDag, ModuleNodeSpec } from "@/apps/common/dag-dsl"
 import { Node, Edge, NodeChange, EdgeChange, Connection, MarkerType } from "@xyflow/react"
 import { addEdge, applyNodeChanges, applyEdgeChanges } from '@xyflow/react';
 import EditorBackendApi from "../../editor-backend-api";
 import { useEffect } from "react";
+import { v4 } from "uuid";
 
 export type GraphAreaState = {
     dag: DagSpec;
@@ -19,11 +19,10 @@ export type GraphAreaState = {
     onConnect: (connection: Connection) => void;
     setNodes: (nodes: Node[]) => void;
     setEdges: (edges: Edge[]) => void;
+    addModuleToDag: (module: ModuleNodeSpec) => void;
     deleteNodeModule: (id: string) => void;
     canBeDeleted: ({ nodes, edges }: { nodes: Node[], edges: Edge[] }) => Promise<boolean | { nodes: Node[], edges: Edge[] }>;
 }
-
-const dag = StubDag();
 
 // the following two variables are used to control the visibility and position of the toolbar
 // should only be applied to the dagModule node type
@@ -79,9 +78,9 @@ const dagToEdges = (dag: DagSpec): Edge[] => {
 
 export const useGraphAreaStore = create<GraphAreaState>()(
     (set, get) => ({
-        dag,
-        nodes: dagToNodes(dag),
-        edges: dagToEdges(dag),
+        dag: emptyDag,
+        nodes: [],
+        edges: [],
         loadDag: async (name: string) => {
             const dag = await EditorBackendApi.getDag(name)
             const nodes = dagToNodes(dag);
@@ -113,6 +112,25 @@ export const useGraphAreaStore = create<GraphAreaState>()(
         },
         setEdges: (edges: Edge[]) => {
             set({ edges });
+        },
+        addModuleToDag: (module: ModuleNodeSpec) => {
+            const dag = get().dag;
+            const uuid = v4();
+            console.log(module)
+            const newDataIn = module.produces.reduce((acc, node) => ({ ...acc, [v4()]: node }), {} as { [uuid: string]: DataNodeSpec });
+            const newDataOut = module.consumes.reduce((acc, node) => ({ ...acc, [v4()]: node }), {} as { [uuid: string]: DataNodeSpec });
+            const newEdgesIn = Object.keys(newDataIn).reduce((acc, id) => acc.concat([[id, uuid]]), [] as [string, string][]);
+            const newEdgesOut = Object.keys(newDataOut).reduce((acc, id) => acc.concat([[uuid, id]]), [] as [string, string][]);
+            const newDag = { 
+                ...dag, 
+                modules: { ...dag.modules, [uuid]: module },
+                data: { ...dag.data, ...newDataIn, ...newDataOut },
+                inEdges: dag.inEdges.concat(newEdgesIn),
+                outEdges: dag.outEdges.concat(newEdgesOut),
+            }
+            const nodes = dagToNodes(newDag);
+            const edges = dagToEdges(newDag);
+            set({ dag: newDag, nodes, edges });
         },
         deleteNodeModule(id) {
             const dag = get().dag;
