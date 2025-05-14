@@ -56,7 +56,8 @@ const dagToNodes = (dag: DagSpec): Node[] => {
 
 const dagToEdges = (dag: DagSpec): Edge[] => {
     const edges: Edge[] = [];
-    dag.edges.forEach(([source, target]) => {
+    const dagEdges = [...dag.inEdges, ...dag.outEdges];
+    dagEdges.forEach(([source, target]) => {
         edges.push({
             id: `${source}-${target}`,
             source,

@@ -29,5 +29,6 @@ export type DagSpec = {
     name: string
     modules: { [uuid: string]: ModuleNodeSpec }
     data: { [uuid: string]: DataNodeSpec }
-    edges: [string, string][]
+    inEdges: [string, string][] // data node -> module node
+    outEdges: [string, string][] // module node -> data node
 }

@@ -68,12 +68,14 @@ export const StubDag: () => DagSpec = () => {
             [data3UUID]: data3,
             [data4UUID]: data4
         },
-        edges: [
+        inEdges: [
             [data1UUID, module1UUID],
             [data2UUID, module1UUID],
-            [module1UUID, data3UUID],
             [data3UUID, module2UUID],
-            [module2UUID, data4UUID]
+        ],
+        outEdges: [
+            [module1UUID, data3UUID],
+            [module2UUID, data4UUID],
         ]
     }
 }

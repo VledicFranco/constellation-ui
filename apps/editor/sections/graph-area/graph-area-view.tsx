@@ -22,7 +22,7 @@ import './graph-area-styles.css';
 import { useShallow } from 'zustand/react/shallow';
 import { GraphAreaState, useGraphAreaStore } from "./graph-area-state";
 
-const getLayoutedElements = (nodes, edges, options) => {
+const getLayoutedElements = (nodes: Node[], edges: Edge[], options: { direction: string }) => {
     const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
     g.setGraph({ rankdir: options.direction });
 
@@ -118,7 +118,7 @@ export default function GraphAreaView({ children }: GraphAreaViewProps) {
     }, []);
 
     const onLayout = useCallback(
-        (direction) => {
+        (direction: string) => {
             const layouted = getLayoutedElements(nodes, edges, { direction });
             setNodes([...layouted.nodes]);
             setEdges([...layouted.edges]);
