@@ -1,7 +1,7 @@
 import { create } from "zustand"
 import { StubDag } from "@/apps/common/stubs"
 import { DagSpec } from "@/apps/common/dag-dsl"
-import { Node, Edge, NodeChange, EdgeChange, Connection } from "@xyflow/react"
+import { Node, Edge, NodeChange, EdgeChange, Connection, MarkerType } from "@xyflow/react"
 import { addEdge, applyNodeChanges, applyEdgeChanges } from '@xyflow/react';
 
 export type GraphAreaState = {
@@ -56,6 +56,10 @@ const dagToEdges = (dag: DagSpec): Edge[] => {
             animated: true,
             style: { stroke: '#f6ab00' },
             type: 'smoothstep',
+            markerEnd: {
+                type: MarkerType.ArrowClosed,
+                color: '#f6ab00',
+            },
         });
     });
     return edges;
