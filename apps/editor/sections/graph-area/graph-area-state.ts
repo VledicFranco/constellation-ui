@@ -1,26 +1,29 @@
 import { create } from "zustand"
 import * as R from 'remeda';
-import { StubDag } from "@/apps/common/stubs"
-import { DagSpec } from "@/apps/common/dag-dsl"
-import { Node, Edge, NodeChange, EdgeChange, Connection, MarkerType } from "@xyflow/react"
+import { DagSpec, DataNodeSpec, emptyDag, ModuleNodeSpec } from "@/apps/common/dag-dsl"
+import { Node, Edge, NodeChange, EdgeChange, Connection, MarkerType, NodeRemoveChange, EdgeAddChange, getIncomers, getOutgoers } from "@xyflow/react"
 import { addEdge, applyNodeChanges, applyEdgeChanges } from '@xyflow/react';
+import EditorBackendApi from "../../editor-backend-api";
+import { useEffect } from "react";
+import { v4 } from "uuid";
 
 export type GraphAreaState = {
     dag: DagSpec;
     nodes: Node[];
     edges: Edge[];
     // Add a method to transform DAG to React Flow nodes
+    loadDag: (name: string) => Promise<void>;
     transformDagToNodes: () => Node[];
-    onNodesChange: (changes: NodeChange[]) => void;
+    onNodesChange: (changes: NodeChange[]) => Promise<void>;
     onEdgesChange: (changes: EdgeChange[]) => void;
     onConnect: (connection: Connection) => void;
     setNodes: (nodes: Node[]) => void;
     setEdges: (edges: Edge[]) => void;
+    addModuleToDag: (module: ModuleNodeSpec) => Promise<void>;
     deleteNodeModule: (id: string) => void;
+    mergeDataNodes: (nodes: Node[]) => Promise<void>;
     canBeDeleted: ({ nodes, edges }: { nodes: Node[], edges: Edge[] }) => Promise<boolean | { nodes: Node[], edges: Edge[] }>;
 }
-
-const dag = StubDag();
 
 // the following two variables are used to control the visibility and position of the toolbar
 // should only be applied to the dagModule node type
@@ -74,20 +77,123 @@ const dagToEdges = (dag: DagSpec): Edge[] => {
     return edges;
 };
 
+type SCNode = { type: "state-change-node", change: NodeChange }
+type SCEdge = { type: "state-change-edge", change: EdgeChange }
+type SCDag = { type: "state-change-dag", change: DagSpec }
+type StateChange = SCNode | SCEdge | SCDag
+
+function scNode(change: NodeChange): StateChange {
+    return ({ type: "state-change-node", change })
+}
+function scEdge(change: EdgeChange): StateChange { 
+    return ({ type: "state-change-edge", change })
+}
+function scDag(change: DagSpec): StateChange {
+    return ({ type: "state-change-dag", change })
+}
+
 export const useGraphAreaStore = create<GraphAreaState>()(
     (set, get) => ({
-        dag,
-        nodes: dagToNodes(dag),
-        edges: dagToEdges(dag),
+        dag: emptyDag,
+        nodes: [],
+        edges: [],
+        loadDag: async (name: string) => {
+            const dag = await EditorBackendApi.getDag(name)
+            const nodes = dagToNodes(dag);
+            const edges = dagToEdges(dag);
+            set({ dag, nodes, edges });
+        },
         transformDagToNodes: () => {
             const nodes = dagToNodes(get().dag);
             set({ nodes });
             return nodes;
         },
-        onNodesChange: (changes: NodeChange[]) => {
-            set({
-                nodes: applyNodeChanges(changes, get().nodes),
+        onNodesChange: async (changes: NodeChange[]) => {
+            const state = get();
+            const newChanges: StateChange[] = changes.flatMap((change) => {
+                if (change.type === 'position' && !change.dragging) {
+                    const node = state.nodes.filter((node) => node.id === change.id)[0]
+                    if (node.type !== 'dagData') return [scNode(change)];
+                    const intersectingNode = state.nodes.filter((n) => {
+                        if (n.id === node.id) return false;
+                        const dx = Math.abs(node.position.x - n.position.x);
+                        const dy = Math.abs(node.position.y - n.position.y);
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        return distance < 50
+                    })[0];
+                    if (intersectingNode && intersectingNode.type === 'dagData') {
+                        console.log("intersecting node", intersectingNode)
+                        const dagLandingNode = state.dag.data[intersectingNode.id];
+                        const dagDraggingNode = state.dag.data[node.id];
+                        if (dagLandingNode.name != dagDraggingNode.name) return [scNode(change)]
+                        const removeChange: NodeRemoveChange = {
+                            id: node.id,
+                            type: 'remove'
+                        }
+                        const inc = getIncomers(node, state.nodes, state.edges)
+                        const incomers: EdgeChange[] = inc.map((n) => {
+                            return {
+                                type: "add",
+                                item: {
+                                    id: v4(),
+                                    source: n.id,
+                                    target: intersectingNode.id,
+                                    animated: true,
+                                    style: { stroke: '#f6ab00' },
+                                    type: 'smoothstep',
+                                    markerEnd: {
+                                        type: MarkerType.ArrowClosed,
+                                        color: '#f6ab00',
+                                    },
+                                }
+                            }
+                        })
+                        const out = getOutgoers(node, state.nodes, state.edges)
+                        const outgoers: EdgeChange[] = out.map((n) => {
+                            return {
+                                type: "add",
+                                item: {
+                                    id: v4(),
+                                    source: intersectingNode.id,
+                                    target: n.id,
+                                    animated: true,
+                                    style: { stroke: '#f6ab00' },
+                                    type: 'smoothstep',
+                                    markerEnd: {
+                                        type: MarkerType.ArrowClosed,
+                                        color: '#f6ab00',
+                                    },
+                                }
+                            }
+                        })
+                        const addEdges: StateChange[] = incomers.concat(outgoers).map(x => scEdge(x))
+                        const removedDagInEdges: [string, string][] = state.dag.inEdges.filter(([source, target]) => target !== node.id);
+                        const removedDagOutEdges: [string, string][] = state.dag.outEdges.filter(([source, target]) => source !== node.id);
+                        const addedDagInEdges: [string, string][] = inc.map(x => [x.id, intersectingNode.id])
+                        const addedDagOutEdges: [string, string][] = out.map(x => [intersectingNode.id, x.id])
+                        const newDag: DagSpec = {
+                            ...state.dag,
+                            data: R.omit(state.dag.data, [node.id]),
+                            inEdges: [...removedDagInEdges, ...addedDagInEdges],
+                            outEdges: [...removedDagOutEdges, ...addedDagOutEdges],
+                        }
+                        return [scNode(removeChange), ...addEdges, scDag(newDag)]
+                    } else 
+                        return [scNode(change)];
+                } else 
+                    return [scNode(change)];
             });
+
+            const nodeChanges: NodeChange[] = newChanges.filter(x => x.type == "state-change-node").map(x => x.change)
+            const edgeChanges: EdgeChange[] = newChanges.filter(x => x.type == "state-change-edge").map(x => x.change)
+            const dagChanges = newChanges.filter(x => x.type == "state-change-dag").map(x => x.change)[0]
+            const dag = dagChanges ? dagChanges : state.dag
+            set({
+                dag,
+                nodes: applyNodeChanges(nodeChanges, state.nodes),
+                edges: applyEdgeChanges(edgeChanges, state.edges)
+            });
+            dagChanges && await EditorBackendApi.saveDag(dag.name, dag);
         },
         onEdgesChange: (changes: EdgeChange[]) => {
             set({
@@ -105,10 +211,33 @@ export const useGraphAreaStore = create<GraphAreaState>()(
         setEdges: (edges: Edge[]) => {
             set({ edges });
         },
+        addModuleToDag: async (module: ModuleNodeSpec) => {
+            const dag = get().dag;
+            const uuid = v4();
+            console.log(module)
+            const newDataIn = module.produces.reduce((acc, node) => ({ ...acc, [v4()]: node }), {} as { [uuid: string]: DataNodeSpec });
+            const newDataOut = module.consumes.reduce((acc, node) => ({ ...acc, [v4()]: node }), {} as { [uuid: string]: DataNodeSpec });
+            const newEdgesIn = Object.keys(newDataIn).reduce((acc, id) => acc.concat([[id, uuid]]), [] as [string, string][]);
+            const newEdgesOut = Object.keys(newDataOut).reduce((acc, id) => acc.concat([[uuid, id]]), [] as [string, string][]);
+            const newDag = { 
+                ...dag, 
+                modules: { ...dag.modules, [uuid]: module },
+                data: { ...dag.data, ...newDataIn, ...newDataOut },
+                inEdges: dag.inEdges.concat(newEdgesIn),
+                outEdges: dag.outEdges.concat(newEdgesOut),
+            }
+            const nodes = dagToNodes(newDag);
+            const edges = dagToEdges(newDag);
+            await EditorBackendApi.saveDag(newDag.name, newDag);
+            set({ dag: newDag, nodes, edges });
+        },
         deleteNodeModule(id) {
             const dag = get().dag;
             const modules = R.filter(Object.entries(dag.modules), ([moduleId, _]) => moduleId !== id);
             set({ dag: { ...dag, modules: R.fromEntries(modules) } });
+        },
+        mergeDataNodes: async (nodes: Node[]) => {
+            console.log(nodes)
         },
         canBeDeleted: async ({ nodes, edges }: { nodes: Node[], edges: Edge[] }) => {
             // Implement your logic to check if the nodes and edges can be deleted
@@ -200,3 +329,10 @@ export const useGraphAreaStore = create<GraphAreaState>()(
         },
     })
 );
+
+export const useInitGraphAreaState = (dagName: string) => {
+    useEffect(() => {
+        const s = useGraphAreaStore.getState();
+        s.loadDag(dagName);
+    }, []);
+}
