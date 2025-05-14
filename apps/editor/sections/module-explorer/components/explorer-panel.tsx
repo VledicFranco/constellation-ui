@@ -7,13 +7,6 @@ import { Panel } from "@xyflow/react";
 import { CSSProperties, useState } from "react";
 import { ExplorersModule } from "../module-explorer-dsl";
 
-const useInitialModuleBarLoader = () => {
-    const loadModules = useModuleExplorerState((state) => state.loadModules)
-    useEffect(() => {
-        loadModules()
-    }, [])
-}
-
 interface ExplorerPanelProperties {
     modules: ExplorersModule[]
 }

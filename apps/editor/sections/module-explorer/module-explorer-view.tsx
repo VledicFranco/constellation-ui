@@ -1,10 +1,10 @@
 import ExplorerPanel from './components/explorer-panel';
 import ExplorerToggleButton from './components/explorer-toggle-button';
 
-import { useModuleExplorerState } from './module-explorer-state';
+import { useInitModuleExplorerState, useModuleExplorerState } from './module-explorer-state';
 
 export default function ModuleExplorerView() {
-
+    useInitModuleExplorerState()
     const state = useModuleExplorerState((state) => state)
 
     return <>
