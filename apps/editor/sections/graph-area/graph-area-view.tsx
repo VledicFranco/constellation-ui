@@ -20,7 +20,7 @@ import '@xyflow/react/dist/style.css';
 import './graph-area-styles.css';
 
 import { useShallow } from 'zustand/react/shallow';
-import { GraphAreaState, useGraphAreaStore } from "./graph-area-state";
+import { GraphAreaState, useGraphAreaStore, useInitGraphAreaState } from "./graph-area-state";
 
 const getLayoutedElements = (nodes: Node[], edges: Edge[], options: { direction: string }) => {
     const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
@@ -100,7 +100,13 @@ function DagModuleNode({ data, id }: NodeProps) {
     );
 }
 
-export default function GraphAreaView({ children }: GraphAreaViewProps) {
+interface GraphAreaViewProps {
+    dagName: string
+}
+
+export default function GraphAreaView({ children, dagName }: GraphAreaViewProps & GraphAreaViewProps) {
+
+    useInitGraphAreaState(dagName);
 
     // The issue might be here - make sure nodeTypes keys match the node type in your store
     const nodeTypes = useMemo(() => ({

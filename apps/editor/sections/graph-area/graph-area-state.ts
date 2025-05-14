@@ -4,12 +4,15 @@ import { StubDag } from "@/apps/common/stubs"
 import { DagSpec } from "@/apps/common/dag-dsl"
 import { Node, Edge, NodeChange, EdgeChange, Connection, MarkerType } from "@xyflow/react"
 import { addEdge, applyNodeChanges, applyEdgeChanges } from '@xyflow/react';
+import EditorBackendApi from "../../editor-backend-api";
+import { useEffect } from "react";
 
 export type GraphAreaState = {
     dag: DagSpec;
     nodes: Node[];
     edges: Edge[];
     // Add a method to transform DAG to React Flow nodes
+    loadDag: (name: string) => Promise<void>;
     transformDagToNodes: () => Node[];
     onNodesChange: (changes: NodeChange[]) => void;
     onEdgesChange: (changes: EdgeChange[]) => void;
@@ -79,6 +82,12 @@ export const useGraphAreaStore = create<GraphAreaState>()(
         dag,
         nodes: dagToNodes(dag),
         edges: dagToEdges(dag),
+        loadDag: async (name: string) => {
+            const dag = await EditorBackendApi.getDag(name)
+            const nodes = dagToNodes(dag);
+            const edges = dagToEdges(dag);
+            set({ dag, nodes, edges });
+        },
         transformDagToNodes: () => {
             const nodes = dagToNodes(get().dag);
             set({ nodes });
@@ -123,3 +132,10 @@ export const useGraphAreaStore = create<GraphAreaState>()(
         },
     })
 );
+
+export const useInitGraphAreaState = (dagName: string) => {
+    useEffect(() => {
+        const s = useGraphAreaStore.getState();
+        s.loadDag(dagName);
+    }, []);
+}
