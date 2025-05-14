@@ -118,8 +118,50 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                 return false;
             }
 
+            const dag = get().dag;
 
-            return true;
+            const moduleIds = modules.map((module) => module.data.id) as string[];
+            const moduleInputs = edges.filter(edge => edge.target === modules[0].id);
+            const moduleInputsSources = moduleInputs.map(edge => edge.source);
+
+            /**
+             * Filters module input sources to find inputs that are no longer used by any other modules.
+             * 
+             * @remarks
+             * This code identifies input data sources that are exclusively consumed by the modules being removed,
+             * by checking if the source has any remaining connections to modules outside the removal set.
+             * 
+             * @returns An array of input data sources that can be safely removed because they have no other consumers
+             * in the directed acyclic graph (DAG) besides the modules being removed.
+             */
+            const inputDatasToRemove = moduleInputsSources.filter((source) => {
+                const sourceHasOtherConsumers = dag.inEdges.some(([s, t]) => {
+                    return s === source && !R.isIncludedIn(t, moduleIds);
+                });
+
+                return !sourceHasOtherConsumers;
+            });
+
+            // we remove any edge that includes the moduleId of the module we are deleting
+            const newDagInEdges = dag.inEdges.filter(([source, target]) => {
+                return !R.isIncludedIn(source, moduleIds) && !R.isIncludedIn(target, moduleIds);
+            });
+            const newDagOutEdges = dag.outEdges.filter(([source, target]) => {
+                return !R.isIncludedIn(source, moduleIds) && !R.isIncludedIn(target, moduleIds);
+            });
+
+            const newModules = R.omit(dag.modules, moduleIds);
+            const newDatas = R.omit(dag.data, inputDatasToRemove);
+
+            const newDag = R.merge(dag, { modules: newModules, data: newDatas, inEdges: newDagInEdges, outEdges: newDagOutEdges });
+
+            const newNodes = dagToNodes(newDag)
+            const newEdges = dagToEdges(newDag)
+            set({ dag: newDag, nodes: newNodes, edges: newEdges });
+
+
+
+            return { nodes: [...modules], edges: [] };
         },
     })
 );

@@ -24,6 +24,11 @@ const data4: DataNodeSpec = {
     name: "Data 4",
     dtype: DataTypes.String
 }
+const data5: DataNodeSpec = {
+    tag: "data-node-spec-singleton",
+    name: "Data 5",
+    dtype: DataTypes.String
+}
 
 const module1: ModuleNodeSpec = {
     tag: "module-node-spec",
@@ -54,6 +59,7 @@ export const StubDag: () => DagSpec = () => {
     const data2UUID = "data-2-fixed-uuid"
     const data3UUID = "data-3-fixed-uuid"
     const data4UUID = "data-4-fixed-uuid"
+    const data5UUID = "data-5-fixed-uuid"
 
     return {
         tag: "dag-spec",
@@ -66,12 +72,15 @@ export const StubDag: () => DagSpec = () => {
             [data1UUID]: data1,
             [data2UUID]: data2,
             [data3UUID]: data3,
-            [data4UUID]: data4
+            [data4UUID]: data4,
+            [data5UUID]: data5
         },
         inEdges: [
             [data1UUID, module1UUID],
             [data2UUID, module1UUID],
             [data3UUID, module2UUID],
+            [data5UUID, module1UUID],
+            [data5UUID, module2UUID],
         ],
         outEdges: [
             [module1UUID, data3UUID],
