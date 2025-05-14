@@ -11,7 +11,9 @@ import {
     NodeProps,
     Panel,
     ControlButton,
-    NodeToolbar
+    NodeToolbar,
+    Node,
+    Edge
 } from '@xyflow/react';
 import { MoveHorizontal, MoveVertical, Info } from "lucide-react";
 import '@xyflow/react/dist/style.css';
@@ -58,6 +60,7 @@ const selector = (state: GraphAreaState) => ({
     onConnect: state.onConnect,
     setNodes: state.setNodes,
     setEdges: state.setEdges,
+    attemptModuleDeletion: state.canBeDeleted,
 });
 
 interface GraphAreaViewProps {
@@ -105,7 +108,7 @@ export default function GraphAreaView({ children }: GraphAreaViewProps) {
         dagModule: DagModuleNode,
     }), []);
 
-    const { nodes, edges, onNodesChange, onEdgesChange, onConnect, setNodes, setEdges } = useGraphAreaStore(useShallow(selector));
+    const { nodes, edges, onNodesChange, onEdgesChange, onConnect, setNodes, setEdges, attemptModuleDeletion } = useGraphAreaStore(useShallow(selector));
 
     // Add client-side-only rendering to prevent hydration mismatch
     const [isClient, setIsClient] = useState(false);
@@ -139,6 +142,7 @@ export default function GraphAreaView({ children }: GraphAreaViewProps) {
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
                 nodeTypes={nodeTypes} /* Fixed variable name from noteTypes to nodeTypes */
+                onBeforeDelete={attemptModuleDeletion}
                 attributionPosition="bottom-left"
                 fitView>
                 <Controls />

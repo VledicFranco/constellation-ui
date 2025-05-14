@@ -17,6 +17,7 @@ export type GraphAreaState = {
     setNodes: (nodes: Node[]) => void;
     setEdges: (edges: Edge[]) => void;
     deleteNodeModule: (id: string) => void;
+    canBeDeleted: ({ nodes, edges }: { nodes: Node[], edges: Edge[] }) => Promise<boolean | { nodes: Node[], edges: Edge[] }>;
 }
 
 const dag = StubDag();
@@ -107,6 +108,17 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             const dag = get().dag;
             const modules = R.filter(Object.entries(dag.modules), ([moduleId, _]) => moduleId !== id);
             set({ dag: { ...dag, modules: R.fromEntries(modules) } });
+        },
+        canBeDeleted: async ({ nodes, edges }: { nodes: Node[], edges: Edge[] }) => {
+            // Implement your logic to check if the nodes and edges can be deleted
+            const modules = nodes.filter(node => node.type === 'dagModule');
+
+            if (modules.length < 1) {
+                return false;
+            }
+
+
+            return true;
         },
     })
 );
