@@ -19,7 +19,7 @@ export type GraphAreaState = {
     onConnect: (connection: Connection) => void;
     setNodes: (nodes: Node[]) => void;
     setEdges: (edges: Edge[]) => void;
-    addModuleToDag: (module: ModuleNodeSpec) => void;
+    addModuleToDag: (module: ModuleNodeSpec) => Promise<void>;
     deleteNodeModule: (id: string) => void;
     canBeDeleted: ({ nodes, edges }: { nodes: Node[], edges: Edge[] }) => Promise<boolean | { nodes: Node[], edges: Edge[] }>;
 }
@@ -113,7 +113,7 @@ export const useGraphAreaStore = create<GraphAreaState>()(
         setEdges: (edges: Edge[]) => {
             set({ edges });
         },
-        addModuleToDag: (module: ModuleNodeSpec) => {
+        addModuleToDag: async (module: ModuleNodeSpec) => {
             const dag = get().dag;
             const uuid = v4();
             console.log(module)
@@ -130,6 +130,7 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             }
             const nodes = dagToNodes(newDag);
             const edges = dagToEdges(newDag);
+            await EditorBackendApi.saveDag(newDag.name, newDag);
             set({ dag: newDag, nodes, edges });
         },
         deleteNodeModule(id) {

@@ -12,7 +12,11 @@ const EditorBackendApi = {
 
     async getDag(name: string): Promise<DagSpec> {
         return (await request("get", `/dag/${name}`)).data.data
-    }
+    },
+
+    async saveDag(name: string, dag: DagSpec): Promise<void> {
+        return (await request("post", `/dag/${name}`, dag)).data.data
+    },
 }
 
 export default EditorBackendApi
