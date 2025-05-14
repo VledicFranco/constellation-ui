@@ -10,9 +10,10 @@ import {
     Position,
     NodeProps,
     Panel,
-    ControlButton
+    ControlButton,
+    NodeToolbar
 } from '@xyflow/react';
-import { MoveHorizontal, MoveVertical } from "lucide-react";
+import { MoveHorizontal, MoveVertical, Info } from "lucide-react";
 import '@xyflow/react/dist/style.css';
 import './graph-area-styles.css';
 
@@ -76,11 +77,23 @@ function DagDataNode({ data, id }: NodeProps) {
 
 function DagModuleNode({ data, id }: NodeProps) {
     return (
-        <div>
-            <Handle type="target" position={Position.Top} isConnectable={true} />
-            <div className="node-header">{data.label}</div>
-            <Handle type="source" position={Position.Bottom} isConnectable={true} />
-        </div>
+        <>
+            <NodeToolbar
+                className='border-gray-300 border-1 rounded-sm shadow-md'
+                isVisible={data.forceToolbarVisible || undefined}
+                position={data.toolbarPosition}
+            >
+                <button onClick={() => {
+                    // TODO: open module explorer
+                }}>
+                    <Info style={{ fill: 'none', maxWidth: '15px', maxHeight: '15px' } as CSSProperties} />
+                </button>
+            </NodeToolbar >
+            <div>
+                <Handle type="target" position={Position.Top} isConnectable={true} />
+                <div className="node-header">{data.label}</div>
+                <Handle type="source" position={Position.Bottom} isConnectable={true} />
+            </div></>
     );
 }
 

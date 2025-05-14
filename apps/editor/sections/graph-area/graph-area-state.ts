@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import * as R from 'remeda';
 import { StubDag } from "@/apps/common/stubs"
 import { DagSpec } from "@/apps/common/dag-dsl"
 import { Node, Edge, NodeChange, EdgeChange, Connection, MarkerType } from "@xyflow/react"
@@ -15,9 +16,15 @@ export type GraphAreaState = {
     onConnect: (connection: Connection) => void;
     setNodes: (nodes: Node[]) => void;
     setEdges: (edges: Edge[]) => void;
+    deleteNodeModule: (id: string) => void;
 }
 
 const dag = StubDag();
+
+// the following two variables are used to control the visibility and position of the toolbar
+// should only be applied to the dagModule node type
+const forceToolbarVisible = false; // Set this to true or false based on your requirement
+const toolbarPosition = 'right'; // Set this to 'top' or 'bottom' based on your requirement
 
 // Helper function to transform DAG to nodes
 const dagToNodes = (dag: DagSpec): Node[] => {
@@ -28,7 +35,7 @@ const dagToNodes = (dag: DagSpec): Node[] => {
         nodes.push({
             id: uuid,
             type: 'dagModule', // Make sure this matches exactly with the nodeTypes in the view
-            data: { label: module.name, id: uuid }, // Include id in data for easier access
+            data: { label: module.name, id: uuid, forceToolbarVisible, toolbarPosition }, // Include id in data for easier access
             position: { x: 250, y: index * 100 + 50 },
         });
     });
@@ -95,6 +102,11 @@ export const useGraphAreaStore = create<GraphAreaState>()(
         },
         setEdges: (edges: Edge[]) => {
             set({ edges });
+        },
+        deleteNodeModule(id) {
+            const dag = get().dag;
+            const modules = R.filter(Object.entries(dag.modules), ([moduleId, _]) => moduleId !== id);
+            set({ dag: { ...dag, modules: R.fromEntries(modules) } });
         },
     })
 );
