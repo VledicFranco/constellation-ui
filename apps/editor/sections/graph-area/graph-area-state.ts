@@ -123,7 +123,6 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             const moduleIds = modules.map((module) => module.data.id) as string[];
             const moduleInputs = edges.filter(edge => edge.target === modules[0].id);
             const moduleInputsSources = moduleInputs.map(edge => edge.source);
-
             /**
              * Filters module input sources to find inputs that are no longer used by any other modules.
              * 
@@ -134,7 +133,6 @@ export const useGraphAreaStore = create<GraphAreaState>()(
              * @returns An array of input data sources that can be safely removed because they have no other consumers
              * in the directed acyclic graph (DAG) besides the modules being removed.
              */
-
             const inputDatasToRemove = moduleInputsSources.filter((source) => {
                 const isProduceByOtherModule = dag.outEdges.some(([_, target]) => {
                     return target === source;
@@ -143,12 +141,39 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                 if (isProduceByOtherModule) {
                     return false;
                 } else {
-
                     const sourceHasOtherConsumers = dag.inEdges.some(([s, t]) => {
                         return s === source && !R.isIncludedIn(t, moduleIds);
                     });
 
                     return !sourceHasOtherConsumers;
+                }
+            });
+
+            const moduleOutputs = edges.filter(edge => edge.source === modules[0].id);
+            const moduleOutputsTargets = moduleOutputs.map(edge => edge.target);
+            /**
+             * Filters module output targets to find outputs that are no longer used by any other modules.
+             * 
+             * @remarks
+             * This code identifies output data targets that are exclusively produced by the modules being removed,
+             * by checking if the target has any remaining connections to modules outside the removal set.
+             * 
+             * @returns An array of output data targets that can be safely removed because they have no other consumers
+             * in the directed acyclic graph (DAG) besides the modules being removed.
+             */
+            const outputDatasToRemove = moduleOutputsTargets.filter((target) => {
+                const isConsumeByOtherModule = dag.inEdges.some(([source, _]) => {
+                    return source === target;
+                });
+
+                if (isConsumeByOtherModule) {
+                    return false;
+                } else {
+                    const targetHasOtherProducers = dag.outEdges.some(([s, t]) => {
+                        return t === target && !R.isIncludedIn(s, moduleIds);
+                    });
+
+                    return !targetHasOtherProducers;
                 }
             });
 
@@ -161,7 +186,7 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             });
 
             const newModules = R.omit(dag.modules, moduleIds);
-            const newDatas = R.omit(dag.data, inputDatasToRemove);
+            const newDatas = R.omit(dag.data, R.concat(inputDatasToRemove, outputDatasToRemove));
 
             const newDag = R.merge(dag, { modules: newModules, data: newDatas, inEdges: newDagInEdges, outEdges: newDagOutEdges });
 
