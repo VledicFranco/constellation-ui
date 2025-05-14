@@ -13,7 +13,8 @@ import {
     ControlButton,
     NodeToolbar,
     Node,
-    Edge
+    Edge,
+    useReactFlow
 } from '@xyflow/react';
 import { MoveHorizontal, MoveVertical, Info } from "lucide-react";
 import '@xyflow/react/dist/style.css';
@@ -21,6 +22,7 @@ import './graph-area-styles.css';
 
 import { useShallow } from 'zustand/react/shallow';
 import { GraphAreaState, useGraphAreaStore, useInitGraphAreaState } from "./graph-area-state";
+import { merge } from 'remeda';
 
 const getLayoutedElements = (nodes: Node[], edges: Edge[], options: { direction: string }) => {
     const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
@@ -61,6 +63,7 @@ const selector = (state: GraphAreaState) => ({
     setNodes: state.setNodes,
     setEdges: state.setEdges,
     attemptModuleDeletion: state.canBeDeleted,
+    mergeDataNodes: state.mergeDataNodes,
 });
 
 interface GraphAreaViewProps {
@@ -114,7 +117,7 @@ export default function GraphAreaView({ children, dagName }: GraphAreaViewProps 
         dagModule: DagModuleNode,
     }), []);
 
-    const { nodes, edges, onNodesChange, onEdgesChange, onConnect, setNodes, setEdges, attemptModuleDeletion } = useGraphAreaStore(useShallow(selector));
+    const { nodes, edges, onNodesChange, onEdgesChange, onConnect, setNodes, setEdges, attemptModuleDeletion, mergeDataNodes } = useGraphAreaStore(useShallow(selector));
 
     // Add client-side-only rendering to prevent hydration mismatch
     const [isClient, setIsClient] = useState(false);
