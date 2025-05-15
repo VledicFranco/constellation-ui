@@ -360,7 +360,8 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                     const contextDataValue = contextData.data;
                     var val = null;
                     if (contextDataValue.dataType.raw === 'ListValue') {
-                        val = `${contextDataValue.listValue?.length} alt-queries`
+                        const xs = (contextDataValue.listValue || []).map((x) => x.stringValue)
+                        val = xs.join(", ")
                     } else if (isNumber(contextDataValue.dataType.raw)) {
                         val = contextDataValue.longValue || contextDataValue.doubleValue;
                     } else if (isBoolean(contextDataValue.dataType.raw)) {
