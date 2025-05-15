@@ -24,8 +24,9 @@ import 'react18-json-view/src/style.css'
 import { GraphAreaApi } from "../../graph-area";
 import { isBoolean, isNumber, isTimestamp } from "@/apps/common/types-dsl";
 import { isSingletonNode } from "@/apps/common/dag-dsl";
+import { useModuleExplorerState } from "../module-explorer-state";
 
-const renderNumberInput = (uuid: string, name: string) => (
+const renderNumberInput = (uuid: string, name: string, getDefaultValue: (uuid: string) => any) => (
     <NumberInput
         name={uuid}
         key={uuid}
@@ -35,6 +36,7 @@ const renderNumberInput = (uuid: string, name: string) => (
         formatOptions={{
             useGrouping: false,
         }}
+        defaultValue={getDefaultValue(uuid)}
         size="sm"
     />
 );
@@ -59,31 +61,43 @@ const renderDateInput = (uuid: string, name: string) => (
     />
 );
 
-const renderDefaultInput = (uuid: string, name: string) => (
+const renderDefaultInput = (uuid: string, name: string, getDefaultValue: (uuid: string) => any) => (
     <Input
         key={uuid}
         name={uuid}
         id={uuid}
         size="sm"
         label={name}
+        defaultValue={getDefaultValue(uuid)}
     />
 );
 
-const renderSingletonNode = (uuid: string, dataNodeSpec: any) => {
-    if (isNumber(dataNodeSpec.dtype.raw)) {
-        return renderNumberInput(uuid, dataNodeSpec.name);
-    } else if (isBoolean(dataNodeSpec.dtype.raw)) {
-        return renderCheckbox(uuid, dataNodeSpec.name);
-    } else if (isTimestamp(dataNodeSpec.dtype.raw)) {
-        return renderDateInput(uuid, dataNodeSpec.name);
-    } else {
-        return renderDefaultInput(uuid, dataNodeSpec.name);
-    }
-}
+
 
 export default function DagRunnerPanel() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submittedSuccessfully, setSubmittedSuccessfully] = useState(null);
+    const { getRunnerPanelValue, setDagRunnerPanelValue, resetDagRunnerPanelValues } = useModuleExplorerState();
+
+    const handleInputChange = (uuid: string, value: string) => {
+        setDagRunnerPanelValue(uuid, value);
+    };
+
+    const renderSingletonNode = (uuid: string, dataNodeSpec: any) => {
+        if (isNumber(dataNodeSpec.dtype.raw)) {
+            return renderNumberInput(uuid, dataNodeSpec.name);
+        } else if (isBoolean(dataNodeSpec.dtype.raw)) {
+            return renderCheckbox(uuid, dataNodeSpec.name);
+        } else if (isTimestamp(dataNodeSpec.dtype.raw)) {
+            return renderDateInput(uuid, dataNodeSpec.name);
+        } else {
+            return renderDefaultInput(uuid, dataNodeSpec.name, getRunnerPanelValue);
+        }
+    }
+
+    const handleReset = () => {
+        resetDagRunnerPanelValues();
+    };
 
     const onSubmit = (e) => {
         e.preventDefault();
@@ -95,6 +109,7 @@ export default function DagRunnerPanel() {
         const dataEntries = Object.fromEntries(entries)
         GraphAreaApi.runDagWithInputs(dataEntries)
             .then((context) => {
+                entries.forEach(([key, value]) => handleInputChange(key, value));
                 setIsSubmitting(false);
                 setSubmittedSuccessfully(context);
             })
@@ -126,7 +141,8 @@ export default function DagRunnerPanel() {
             <div className="flex flex-col gap-2">
                 <Form
                     className="w-full justify-center items-center space-y-4"
-                    onSubmit={onSubmit}>
+                    onSubmit={onSubmit}
+                    onReset={handleReset}>
                     <Card className="w-full">
                         <CardHeader className="flex gap-1">
                             DAG Inputs
