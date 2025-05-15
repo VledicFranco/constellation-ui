@@ -171,10 +171,10 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                             }
                         })
                         const addEdges: StateChange[] = incomers.concat(outgoers).map(x => scEdge(x))
-                        const removedDagInEdges: [string, string][] = state.dag.inEdges.filter(([source, target]) => target !== node.id);
-                        const removedDagOutEdges: [string, string][] = state.dag.outEdges.filter(([source, target]) => source !== node.id);
-                        const addedDagInEdges: [string, string][] = inc.map(x => [x.id, intersectingNode.id])
-                        const addedDagOutEdges: [string, string][] = out.map(x => [intersectingNode.id, x.id])
+                        const removedDagInEdges: [string, string][] = state.dag.inEdges.filter(([source, target]) => source !== node.id);
+                        const removedDagOutEdges: [string, string][] = state.dag.outEdges.filter(([source, target]) => target !== node.id);
+                        const addedDagInEdges: [string, string][] = out.map(x => [intersectingNode.id, x.id])
+                        const addedDagOutEdges: [string, string][] = inc.map(x => [x.id, intersectingNode.id])
                         const newDag: DagSpec = {
                             ...state.dag,
                             data: R.omit(state.dag.data, [node.id]),
@@ -197,7 +197,7 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                 nodes: applyNodeChanges(nodeChanges, state.nodes),
                 edges: applyEdgeChanges(edgeChanges, state.edges)
             });
-            dagChanges && await EditorBackendApi.saveDag(dag.name, dag);
+            dagChanges && await EditorBackendApi.saveDag(dag.name, dagChanges);
         },
         onEdgesChange: (changes: EdgeChange[]) => {
             set({
