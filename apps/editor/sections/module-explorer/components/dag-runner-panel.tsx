@@ -32,6 +32,9 @@ const renderNumberInput = (uuid: string, name: string) => (
         id={uuid}
         label={name}
         hideStepper
+        formatOptions={{
+            useGrouping: false,
+        }}
         size="sm"
     />
 );
