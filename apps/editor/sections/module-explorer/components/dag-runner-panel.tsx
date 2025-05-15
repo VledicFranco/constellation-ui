@@ -18,6 +18,55 @@ import { GraphAreaApi } from "../../graph-area";
 import { isBoolean, isNumber, isTimestamp } from "@/apps/common/types-dsl";
 import { isSingletonNode } from "@/apps/common/dag-dsl";
 
+const renderNumberInput = (uuid: string, name: string) => (
+    <NumberInput
+        size="sm"
+        hideStepper
+        key={uuid}
+        id={uuid}
+        label={name}
+    />
+);
+
+const renderCheckbox = (uuid: string, name: string) => (
+    <Checkbox
+        size="sm"
+        key={uuid}
+        id={uuid}
+    >{name}</Checkbox>
+);
+
+const renderDateInput = (uuid: string, name: string) => (
+    <DateInput
+        key={uuid}
+        id={uuid}
+        size="sm"
+        granularity="second"
+        label={name}
+    />
+);
+
+const renderDefaultInput = (uuid: string, name: string) => (
+    <Input
+        key={uuid}
+        id={uuid}
+        size="sm"
+        label={name}
+    />
+);
+
+const renderSingletonNode = (uuid: string, dataNodeSpec: any) => {
+    if (isNumber(dataNodeSpec.dtype.raw)) {
+        return renderNumberInput(uuid, dataNodeSpec.name);
+    } else if (isBoolean(dataNodeSpec.dtype.raw)) {
+        return renderCheckbox(uuid, dataNodeSpec.name);
+    } else if (isTimestamp(dataNodeSpec.dtype.raw)) {
+        return renderDateInput(uuid, dataNodeSpec.name);
+    } else {
+        return renderDefaultInput(uuid, dataNodeSpec.name);
+    }
+}
+
 export default function DagRunnerPanel() {
 
     const runDag = () => {
@@ -51,41 +100,8 @@ export default function DagRunnerPanel() {
                             <div className="flex flex-col gap-4 w-full">
                                 {dataInputs.map(([uuid, dataNodeSpec]) => {
                                     if (isSingletonNode(dataNodeSpec)) {
-                                        if (isNumber(dataNodeSpec.dtype.raw)) {
-                                            return (
-                                                <NumberInput
-                                                    size="sm"
-                                                    hideStepper
-                                                    key={uuid}
-                                                    id={uuid}
-                                                    label={dataNodeSpec.name}
-                                                />
-                                            );
-                                        } else if (isBoolean(dataNodeSpec.dtype.raw)) {
-                                            return (
-                                                <Checkbox
-                                                    size="sm"
-                                                    key={uuid}
-                                                    id={uuid}
-                                                >{dataNodeSpec.name}</Checkbox>
-                                            );
-                                        } else if (isTimestamp(dataNodeSpec.dtype.raw)) {
-                                            return (
-                                                <DateInput
-                                                    key={uuid}
-                                                    id={uuid}
-                                                    size="sm"
-                                                    granularity="second"
-                                                    label={dataNodeSpec.name} />
-                                            );
-                                        } else {
-                                            return (
-                                                <Input
-                                                    key={uuid}
-                                                    id={uuid}
-                                                    size="sm"
-                                                    label={dataNodeSpec.name} />
-                                            );
+                                        if (isSingletonNode(dataNodeSpec)) {
+                                            return renderSingletonNode(uuid, dataNodeSpec);
                                         }
                                     }
                                 })}
