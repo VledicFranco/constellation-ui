@@ -216,3 +216,46 @@ export const UserId = (value: number): Value => ({
     mappingValue: null,
     embeddingValue: null,
 }) as Value
+
+export const buildValue = (value: string, dataType: DataType): Value => {
+    if (value === null || value === undefined) {
+        return ({
+            dataType: dataType,
+            missingOrNull: true,
+            longValue: null,
+            stringValue: null,
+            doubleValue: null,
+            boolValue: null,
+            timestampValue: null,
+            listValue: null,
+            timeseriesValue: null,
+            mappingValue: null,
+            embeddingValue: null
+        } as Value)
+    }
+    else if (dataType.context) {
+        if (dataType.context === "ListingId") {
+            return ListingId(Number.parseInt(value))
+        }
+        else if (dataType.context === "UserId") {
+            return UserId(Number.parseInt(value))
+        }
+        else {
+            throw new Error(`Unsupported context ${dataType.context}`)
+        }
+    } else 
+        switch (dataType.raw) {
+            case "BooleanValue":
+                return Bool(true)
+            case "FloatNumeric":
+                return Float(Number.parseFloat(value))
+            case "IntNumeric":
+                return Integer(Number.parseInt(value))
+            case "StringValue":
+                return String(value)
+            case "Timestamp":
+                return Timestamp(value)
+            default:
+                throw new Error(`Unsupported data type ${dataType.raw}`)
+        }
+}

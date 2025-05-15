@@ -1,4 +1,5 @@
-import { DataType } from "./types-dsl"
+import { error } from "console"
+import { DataType, Value } from "./types-dsl"
 
 export type DataNodeSpec
     = {
@@ -65,4 +66,22 @@ export const emptyDag: DagSpec = {
     data: {},
     inEdges: [],
     outEdges: []
+}
+
+export type DataNode = {
+    tag: "data-node-singleton"
+    spec: DataNodeSpec
+    data: Value
+}
+
+export type ModuleStatus 
+    = { tag: "unfired" }
+    | { tag: "fired" }
+    | { tag: "failed", error: string }
+
+export type EngineContext = {
+    processUuid: string
+    dag: DagSpec
+    moduleStatus: { [uuid: string]: ModuleStatus }
+    loadedData: { [uuid: string]: DataNode }
 }

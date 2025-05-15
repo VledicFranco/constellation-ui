@@ -12,7 +12,7 @@ import {
     DateInput
 } from "@heroui/react";
 import { Panel } from "@xyflow/react";
-import { CSSProperties } from "react";
+import { CSSProperties, useCallback } from "react";
 
 import { GraphAreaApi } from "../../graph-area";
 import { isBoolean, isNumber, isTimestamp } from "@/apps/common/types-dsl";
@@ -73,16 +73,16 @@ const renderSingletonNode = (uuid: string, dataNodeSpec: any) => {
 
 const onSubmit = (e) => {
     e.preventDefault();
-
-    const data = Object.fromEntries(new FormData(e.currentTarget));
-
-    console.log("Form data:", data);
+    const data: { [entry: string]: FormDataEntryValue } = Object.fromEntries(new FormData(e.currentTarget));
+    const entries = Object.entries(data).map(([key, value]) => {
+        return [key, value.toString()]
+    })
+    const dataEntries = Object.fromEntries(entries)
+    console.log("Form data:", dataEntries)
+    GraphAreaApi.runDagWithInputs(dataEntries)
 };
 
 export default function DagRunnerPanel() {
-
-    const runDag = () => {
-    }
 
     const dataInputs = Object.entries(GraphAreaApi.getDagInputs());
 
@@ -121,7 +121,7 @@ export default function DagRunnerPanel() {
                         </CardBody>
                         <Divider />
                         <CardFooter>
-                            <Button type="submit" color="success" variant="bordered" onPress={runDag}>Run</Button>
+                            <Button type="submit" color="success" variant="bordered">Run</Button>
                         </CardFooter>
                     </Card>
                 </Form>

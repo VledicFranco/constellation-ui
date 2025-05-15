@@ -1,6 +1,6 @@
 import { create } from "zustand"
 import * as R from 'remeda';
-import { DagSpec, DataNodeSpec, emptyDag, ModuleNodeSpec } from "@/apps/common/dag-dsl"
+import { DagSpec, DataNodeSpec, emptyDag, EngineContext, ModuleNodeSpec } from "@/apps/common/dag-dsl"
 import { Node, Edge, NodeChange, EdgeChange, Connection, MarkerType, NodeRemoveChange, EdgeAddChange, getIncomers, getOutgoers } from "@xyflow/react"
 import { addEdge, applyNodeChanges, applyEdgeChanges } from '@xyflow/react';
 import EditorBackendApi from "../../editor-backend-api";
@@ -25,6 +25,7 @@ export type GraphAreaState = {
     mergeDataNodes: (nodes: Node[]) => Promise<void>;
     canBeDeleted: ({ nodes, edges }: { nodes: Node[], edges: Edge[] }) => Promise<boolean | { nodes: Node[], edges: Edge[] }>;
     getDagInputs: () => { [uuid: string]: DataNodeSpec };
+    renderEngineContext: (context: EngineContext) => void;
 }
 
 // the following two variables are used to control the visibility and position of the toolbar
@@ -343,7 +344,11 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             const filteredInputs = R.filter(Object.entries(dag.data), ([uuid, _]) => dataInputNames.includes(uuid));
 
             return R.fromEntries(filteredInputs);
-        }
+        },
+        renderEngineContext: (context: EngineContext) => {
+            console.log("renderEngineContext", context)
+            // Implement your logic to render the engine context
+        },
     })
 );
 
