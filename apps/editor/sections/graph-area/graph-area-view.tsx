@@ -104,6 +104,19 @@ function DagModuleNode({ data, id }: NodeProps) {
         }
     };
 
+    const message = (d) => {
+        switch (d.tag) {
+            case 'fired':
+                return 'fired';
+            case 'failed':
+                return 'e: ' + d.error;
+            case 'unfired':
+                return 'unfired';
+            default:
+                return 'default';
+        }
+    }
+
     return (
         <>
             <NodeToolbar
@@ -123,7 +136,7 @@ function DagModuleNode({ data, id }: NodeProps) {
                     <div className='node-header'>{data.label}</div>
                     {data.tag && (
                         <div className='node-value'>
-                            <Chip size="sm" variant='flat' color={moduleTagChipClass(data.tag)}>{data.tag}</Chip>
+                            <Chip size="sm" variant='flat' color={moduleTagChipClass(data.tag)}>{message(data)}</Chip>
                         </div>
                     )}
                     {data.latency && (
