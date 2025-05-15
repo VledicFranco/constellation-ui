@@ -7,6 +7,7 @@ import EditorBackendApi from "../../editor-backend-api";
 import { useEffect } from "react";
 import { v4 } from "uuid";
 import { StubDag } from "@/apps/common/stubs";
+import { isBoolean, isNumber, isTimestamp } from "@/apps/common/types-dsl";
 
 export type GraphAreaState = {
     dag: DagSpec;
@@ -348,6 +349,33 @@ export const useGraphAreaStore = create<GraphAreaState>()(
         renderEngineContext: (context: EngineContext) => {
             console.log("renderEngineContext", context)
             // Implement your logic to render the engine context
+
+            const dag = get().dag;
+            const nodes = dagToNodes(dag);
+
+            const newNodes = R.map(nodes, (node) => {
+                const contextData = context.loadedData[node.id];
+
+                if (!contextData) {
+                    return node;
+                }
+
+                const contextDataValue = contextData.data;
+                var val = null;
+                if (isNumber(contextDataValue.dataType.raw)) {
+                    val = contextDataValue.longValue || contextDataValue.doubleValue;
+                } else if (isBoolean(contextDataValue.dataType.raw)) {
+                    val = contextDataValue.boolValue;
+                } else if (isTimestamp(contextDataValue.dataType.raw)) {
+                    val = contextDataValue.timestampValue;
+                } else {
+                    val = contextDataValue.stringValue;
+                }
+                node.data = { ...node.data, value: val };
+                return node;
+            });
+
+            get().setNodes(newNodes);
         },
     })
 );

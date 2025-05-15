@@ -23,6 +23,7 @@ import './graph-area-styles.css';
 import { useShallow } from 'zustand/react/shallow';
 import { GraphAreaState, useGraphAreaStore, useInitGraphAreaState } from "./graph-area-state";
 import { merge } from 'remeda';
+import { Chip } from '@heroui/react';
 
 const getLayoutedElements = (nodes: Node[], edges: Edge[], options: { direction: string }) => {
     const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
@@ -75,7 +76,14 @@ function DagDataNode({ data, id }: NodeProps) {
     return (
         <div>
             <Handle type="target" position={Position.Top} isConnectable={true} />
-            <div className="node-header">{data.label}</div>
+            <div className='grid grid-cols-1'>
+                <div className='node-header'>{data.label}</div>
+                {data.value && (
+                    <div className='node-value'>
+                        <Chip size="sm" color='primary'>{data.value}</Chip>
+                    </div>
+                )}
+            </div>
             <Handle type="source" position={Position.Bottom} isConnectable={true} />
         </div>
     );
