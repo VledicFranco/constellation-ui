@@ -330,7 +330,7 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             return { nodes: [...modules], edges: [] };
         },
         getDagInputs: () => {
-            const dag = StubDag();
+            const dag = get().dag; // StubDag();
             const dataInputNames = dag.inEdges.map(([source, _]) => source);
             const filteredInputs = R.filter(Object.entries(dag.data), ([uuid, _]) => dataInputNames.includes(uuid));
 
