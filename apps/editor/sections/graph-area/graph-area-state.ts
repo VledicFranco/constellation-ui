@@ -330,8 +330,15 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             return { nodes: [...modules], edges: [] };
         },
         getDagInputs: () => {
-            const dag = get().dag; // StubDag();
-            const dataInputNames = dag.inEdges.map(([source, _]) => source);
+            const dag = get().dag;
+            // const dag = StubDag();
+
+            const dataInputNames = R.pipe(dag.inEdges,
+                R.map(([source, _]) => source),
+                R.unique(),
+                R.filter((source) => !dag.outEdges.some(([_, target]) => target === source))
+            )
+
             const filteredInputs = R.filter(Object.entries(dag.data), ([uuid, _]) => dataInputNames.includes(uuid));
 
             return R.fromEntries(filteredInputs);

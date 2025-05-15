@@ -7,12 +7,9 @@ const data1: DataNodeSpec = {
     dtype: DataTypes.Integer
 }
 const data2: DataNodeSpec = {
-    tag: "data-node-spec-product",
+    tag: "data-node-spec-singleton",
     name: "Data 2",
-    dtype: {
-        "a": DataTypes.String,
-        "b": DataTypes.Integer
-    }
+    dtype: DataTypes.String
 }
 const data3: DataNodeSpec = {
     tag: "data-node-spec-singleton",
