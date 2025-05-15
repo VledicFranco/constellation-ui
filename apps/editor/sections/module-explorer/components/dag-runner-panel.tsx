@@ -13,6 +13,7 @@ import {
     Spinner,
     Accordion,
     AccordionItem,
+    ScrollShadow
 } from "@heroui/react";
 import { Panel } from "@xyflow/react";
 import { CSSProperties, useState } from "react";
@@ -143,10 +144,11 @@ export default function DagRunnerPanel() {
                                     })}
                                 </div>
                                 {submittedSuccessfully && (
-                                    <div className="flex flex-col gap-4 w-full">
+                                    <div className="flex flex-col w-full">
                                         <Accordion variant="splitted">
                                             <AccordionItem key="1" aria-label="Raw response JSON" title="Raw response JSON">
-                                                <JsonView src={submittedSuccessfully} />
+                                                <ScrollShadow style={{ maxHeight: '300px' }}>
+                                                    <JsonView src={submittedSuccessfully} /></ScrollShadow>
                                             </AccordionItem>
                                         </Accordion>
                                     </div>
