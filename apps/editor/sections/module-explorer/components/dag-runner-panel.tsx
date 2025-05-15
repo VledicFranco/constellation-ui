@@ -9,10 +9,11 @@ import {
     Input,
     NumberInput,
     Checkbox,
-    DateInput
+    DateInput,
+    Spinner
 } from "@heroui/react";
 import { Panel } from "@xyflow/react";
-import { CSSProperties, useCallback } from "react";
+import { CSSProperties, useState } from "react";
 
 import { GraphAreaApi } from "../../graph-area";
 import { isBoolean, isNumber, isTimestamp } from "@/apps/common/types-dsl";
@@ -71,18 +72,27 @@ const renderSingletonNode = (uuid: string, dataNodeSpec: any) => {
     }
 }
 
-const onSubmit = (e) => {
-    e.preventDefault();
-    const data: { [entry: string]: FormDataEntryValue } = Object.fromEntries(new FormData(e.currentTarget));
-    const entries = Object.entries(data).map(([key, value]) => {
-        return [key, value.toString()]
-    })
-    const dataEntries = Object.fromEntries(entries)
-    console.log("Form data:", dataEntries)
-    GraphAreaApi.runDagWithInputs(dataEntries)
-};
-
 export default function DagRunnerPanel() {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const onSubmit = (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        const data: { [entry: string]: FormDataEntryValue } = Object.fromEntries(new FormData(e.currentTarget));
+        const entries = Object.entries(data).map(([key, value]) => {
+            return [key, value.toString()]
+        })
+        const dataEntries = Object.fromEntries(entries)
+        GraphAreaApi.runDagWithInputs(dataEntries)
+            .then(() => {
+                setIsSubmitting(false);
+            })
+            .catch((error) => {
+                console.error("Error running DAG:", error);
+                setIsSubmitting(false);
+            });
+    };
+
 
     const dataInputs = Object.entries(GraphAreaApi.getDagInputs());
 
@@ -108,7 +118,6 @@ export default function DagRunnerPanel() {
                         </CardHeader>
                         <Divider />
                         <CardBody>
-
                             <div className="flex flex-col gap-4 w-full">
                                 {dataInputs.map(([uuid, dataNodeSpec]) => {
                                     if (isSingletonNode(dataNodeSpec)) {
@@ -121,7 +130,16 @@ export default function DagRunnerPanel() {
                         </CardBody>
                         <Divider />
                         <CardFooter>
-                            <Button type="submit" color="success" variant="bordered">Run</Button>
+                            {!isSubmitting ? (
+                                <div className="flex gap-4">
+                                    <Button type="submit" color="primary" variant="bordered">Run</Button>
+                                    <Button type="reset" variant="bordered">Reset</Button>
+                                </div>
+                            ) : (
+                                <div className="flex flex-row gap-2 w-full justify-center">
+                                    <Spinner size="lg" />
+                                </div>
+                            )}
                         </CardFooter>
                     </Card>
                 </Form>
