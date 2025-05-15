@@ -41,16 +41,17 @@ const renderNumberInput = (uuid: string, name: string, getDefaultValue: (uuid: s
     />
 );
 
-const renderCheckbox = (uuid: string, name: string) => (
+const renderCheckbox = (uuid: string, name: string, getDefaultValue: (uuid: string) => any) => (
     <Checkbox
         name={uuid}
         key={uuid}
         id={uuid}
         size="sm"
+        defaultValue={getDefaultValue(uuid)}
     >{name}</Checkbox>
 );
 
-const renderDateInput = (uuid: string, name: string) => (
+const renderDateInput = (uuid: string, name: string, getDefaultValue: (uuid: string) => any) => (
     <DateInput
         name={uuid}
         key={uuid}
@@ -58,6 +59,7 @@ const renderDateInput = (uuid: string, name: string) => (
         size="sm"
         granularity="second"
         label={name}
+        defaultValue={getDefaultValue(uuid)}
     />
 );
 
@@ -72,8 +74,6 @@ const renderDefaultInput = (uuid: string, name: string, getDefaultValue: (uuid: 
     />
 );
 
-
-
 export default function DagRunnerPanel() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submittedSuccessfully, setSubmittedSuccessfully] = useState(null);
@@ -85,7 +85,7 @@ export default function DagRunnerPanel() {
 
     const renderSingletonNode = (uuid: string, dataNodeSpec: any) => {
         if (isNumber(dataNodeSpec.dtype.raw)) {
-            return renderNumberInput(uuid, dataNodeSpec.name);
+            return renderNumberInput(uuid, dataNodeSpec.name, getRunnerPanelValue);
         } else if (isBoolean(dataNodeSpec.dtype.raw)) {
             return renderCheckbox(uuid, dataNodeSpec.name);
         } else if (isTimestamp(dataNodeSpec.dtype.raw)) {
