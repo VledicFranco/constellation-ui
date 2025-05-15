@@ -321,6 +321,7 @@ export const useGraphAreaStore = create<GraphAreaState>()(
 
             const newNodes = dagToNodes(newDag)
             const newEdges = dagToEdges(newDag)
+            await EditorBackendApi.saveDag(newDag.name, newDag);
             set({ dag: newDag, nodes: newNodes, edges: newEdges });
 
 
