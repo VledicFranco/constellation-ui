@@ -217,6 +217,20 @@ export const UserId = (value: number): Value => ({
     embeddingValue: null,
 }) as Value
 
+export const SearchQuery = (value: string): Value => ({
+    dataType: DataTypes.String,
+    missingOrNull: false,
+    longValue: null,
+    stringValue: value,
+    doubleValue: null,
+    boolValue: null,
+    timestampValue: null,
+    listValue: null,
+    timeseriesValue: null,
+    mappingValue: null,
+    embeddingValue: null,
+}) as Value
+
 export const buildValue = (value: string, dataType: DataType): Value => {
     if (value === null || value === undefined) {
         return ({
@@ -240,10 +254,13 @@ export const buildValue = (value: string, dataType: DataType): Value => {
         else if (dataType.context === "UserId") {
             return UserId(Number.parseInt(value))
         }
+        else if (dataType.context === "SearchQuery") {
+            return SearchQuery(value)
+        }
         else {
             throw new Error(`Unsupported context ${dataType.context}`)
         }
-    } else 
+    } else
         switch (dataType.raw) {
             case "BooleanValue":
                 return Bool(true)
