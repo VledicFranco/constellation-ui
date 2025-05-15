@@ -219,8 +219,8 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             const dag = get().dag;
             const uuid = v4();
             console.log(module)
-            const newDataIn = module.produces.reduce((acc, node) => ({ ...acc, [v4()]: node }), {} as { [uuid: string]: DataNodeSpec });
-            const newDataOut = module.consumes.reduce((acc, node) => ({ ...acc, [v4()]: node }), {} as { [uuid: string]: DataNodeSpec });
+            const newDataIn = module.consumes.reduce((acc, node) => ({ ...acc, [v4()]: node }), {} as { [uuid: string]: DataNodeSpec });
+            const newDataOut = module.produces.reduce((acc, node) => ({ ...acc, [v4()]: node }), {} as { [uuid: string]: DataNodeSpec });
             const newEdgesIn = Object.keys(newDataIn).reduce((acc, id) => acc.concat([[id, uuid]]), [] as [string, string][]);
             const newEdgesOut = Object.keys(newDataOut).reduce((acc, id) => acc.concat([[uuid, id]]), [] as [string, string][]);
             const newDag = {
