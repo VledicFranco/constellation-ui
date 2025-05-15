@@ -112,7 +112,12 @@ export default function DagRunnerPanel() {
             });
     };
 
-    const dataInputs = Object.entries(GraphAreaApi.getDagInputs());
+    const dataInputs = Object.entries(GraphAreaApi.getDagInputs() || {});
+
+    // Don't render if there are no data inputs
+    if (!dataInputs || dataInputs.length === 0) {
+        return null;
+    }
 
     return (
         <Panel
@@ -140,10 +145,9 @@ export default function DagRunnerPanel() {
                                 <div className="flex flex-col gap-4 w-full">
                                     {dataInputs.map(([uuid, dataNodeSpec]) => {
                                         if (isSingletonNode(dataNodeSpec)) {
-                                            if (isSingletonNode(dataNodeSpec)) {
-                                                return renderSingletonNode(uuid, dataNodeSpec);
-                                            }
+                                            return renderSingletonNode(uuid, dataNodeSpec);
                                         }
+                                        return null;
                                     })}
                                 </div>
                                 {submittedSuccessfully && (
@@ -151,7 +155,8 @@ export default function DagRunnerPanel() {
                                         <Accordion variant="splitted">
                                             <AccordionItem key="1" aria-label="Raw response JSON" title="Raw response JSON">
                                                 <ScrollShadow style={{ maxHeight: '300px' }}>
-                                                    <JsonView src={submittedSuccessfully} /></ScrollShadow>
+                                                    <JsonView src={submittedSuccessfully} />
+                                                </ScrollShadow>
                                             </AccordionItem>
                                         </Accordion>
                                     </div>
@@ -174,7 +179,7 @@ export default function DagRunnerPanel() {
                     </Card>
                 </Form>
             </div>
-        </Panel >
+        </Panel>
     );
 }
 
