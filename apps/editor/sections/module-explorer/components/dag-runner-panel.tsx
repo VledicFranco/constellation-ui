@@ -81,14 +81,6 @@ const renderSingletonNode = (uuid: string, dataNodeSpec: any) => {
     }
 }
 
-const my_json_object = {
-    "name": "John",
-    "age": 30,
-    "city": "New York",
-    "isStudent": false,
-    "courses": ["Math", "Science", "History"],
-}
-
 export default function DagRunnerPanel() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submittedSuccessfully, setSubmittedSuccessfully] = useState(null);

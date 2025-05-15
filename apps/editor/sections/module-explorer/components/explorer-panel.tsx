@@ -1,7 +1,6 @@
-import { Key, useEffect } from "react"
-import { useModuleExplorerState } from "../module-explorer-state"
+import { Key } from "react"
 import { Autocomplete, AutocompleteItem } from "@heroui/autocomplete";
-import { Card, Chip, CardBody, CardFooter, CardHeader, Divider, Link, Button } from "@heroui/react";
+import { Card, Chip, CardBody, CardFooter, CardHeader, Divider, Button } from "@heroui/react";
 import { Panel } from "@xyflow/react";
 import { CSSProperties, useState } from "react";
 import { ExplorersModule } from "../module-explorer-dsl";
