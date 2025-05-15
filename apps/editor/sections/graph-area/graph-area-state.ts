@@ -35,7 +35,7 @@ const forceToolbarVisible = false; // Set this to true or false based on your re
 const toolbarPosition = 'right'; // Set this to 'top' or 'bottom' based on your requirement
 
 // Helper function to transform DAG to nodes
-const dagToNodes = (dag: DagSpec): Node[] => {
+const dagToNodes = (dag: DagSpec, old: Node[]): Node[] => {
     const nodes: Node[] = [];
 
     // Add module nodes
@@ -58,7 +58,21 @@ const dagToNodes = (dag: DagSpec): Node[] => {
         });
     });
 
-    return nodes;
+    const newNodes = nodes.map((node) => {
+        const oldNode = old.find((n) => n.id === node.id);
+        if (oldNode) {
+            return {
+                ...node,
+                position: oldNode.position,
+                data: {
+                    ...node.data,
+                    value: oldNode.data.value,
+                },
+            };
+        }
+        return node;
+    });
+    return newNodes;
 };
 
 const dagToEdges = (dag: DagSpec): Edge[] => {
@@ -103,12 +117,12 @@ export const useGraphAreaStore = create<GraphAreaState>()(
         edges: [],
         loadDag: async (name: string) => {
             const dag = await EditorBackendApi.getDag(name)
-            const nodes = dagToNodes(dag);
+            const nodes = dagToNodes(dag, get().nodes);
             const edges = dagToEdges(dag);
             set({ dag, nodes, edges });
         },
         transformDagToNodes: () => {
-            const nodes = dagToNodes(get().dag);
+            const nodes = dagToNodes(get().dag, get().nodes);
             set({ nodes });
             return nodes;
         },
@@ -230,7 +244,7 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                 inEdges: dag.inEdges.concat(newEdgesIn),
                 outEdges: dag.outEdges.concat(newEdgesOut),
             }
-            const nodes = dagToNodes(newDag);
+            const nodes = dagToNodes(newDag, get().nodes);
             const edges = dagToEdges(newDag);
             await EditorBackendApi.saveDag(newDag.name, newDag);
             set({ dag: newDag, nodes, edges });
@@ -323,7 +337,7 @@ export const useGraphAreaStore = create<GraphAreaState>()(
 
             const newDag = R.merge(dag, { modules: newModules, data: newDatas, inEdges: newDagInEdges, outEdges: newDagOutEdges });
 
-            const newNodes = dagToNodes(newDag)
+            const newNodes = dagToNodes(newDag, get().nodes);
             const newEdges = dagToEdges(newDag)
             await EditorBackendApi.saveDag(newDag.name, newDag);
             set({ dag: newDag, nodes: newNodes, edges: newEdges });
@@ -351,7 +365,7 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             // Implement your logic to render the engine context
 
             const dag = get().dag;
-            const nodes = dagToNodes(dag);
+            const nodes = dagToNodes(dag, get().nodes)
 
             const newNodes = R.map(nodes, (node) => {
                 const contextData = context.loadedData[node.id];
