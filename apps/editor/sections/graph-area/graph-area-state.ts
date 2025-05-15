@@ -6,6 +6,7 @@ import { addEdge, applyNodeChanges, applyEdgeChanges } from '@xyflow/react';
 import EditorBackendApi from "../../editor-backend-api";
 import { useEffect } from "react";
 import { v4 } from "uuid";
+import { StubDag } from "@/apps/common/stubs";
 
 export type GraphAreaState = {
     dag: DagSpec;
@@ -23,6 +24,7 @@ export type GraphAreaState = {
     deleteNodeModule: (id: string) => void;
     mergeDataNodes: (nodes: Node[]) => Promise<void>;
     canBeDeleted: ({ nodes, edges }: { nodes: Node[], edges: Edge[] }) => Promise<boolean | { nodes: Node[], edges: Edge[] }>;
+    getDagInputs: () => { [uuid: string]: DataNodeSpec };
 }
 
 // the following two variables are used to control the visibility and position of the toolbar
@@ -85,7 +87,7 @@ type StateChange = SCNode | SCEdge | SCDag
 function scNode(change: NodeChange): StateChange {
     return ({ type: "state-change-node", change })
 }
-function scEdge(change: EdgeChange): StateChange { 
+function scEdge(change: EdgeChange): StateChange {
     return ({ type: "state-change-edge", change })
 }
 function scDag(change: DagSpec): StateChange {
@@ -178,9 +180,9 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                             outEdges: [...removedDagOutEdges, ...addedDagOutEdges],
                         }
                         return [scNode(removeChange), ...addEdges, scDag(newDag)]
-                    } else 
+                    } else
                         return [scNode(change)];
-                } else 
+                } else
                     return [scNode(change)];
             });
 
@@ -219,8 +221,8 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             const newDataOut = module.consumes.reduce((acc, node) => ({ ...acc, [v4()]: node }), {} as { [uuid: string]: DataNodeSpec });
             const newEdgesIn = Object.keys(newDataIn).reduce((acc, id) => acc.concat([[id, uuid]]), [] as [string, string][]);
             const newEdgesOut = Object.keys(newDataOut).reduce((acc, id) => acc.concat([[uuid, id]]), [] as [string, string][]);
-            const newDag = { 
-                ...dag, 
+            const newDag = {
+                ...dag,
                 modules: { ...dag.modules, [uuid]: module },
                 data: { ...dag.data, ...newDataIn, ...newDataOut },
                 inEdges: dag.inEdges.concat(newEdgesIn),
@@ -327,6 +329,13 @@ export const useGraphAreaStore = create<GraphAreaState>()(
 
             return { nodes: [...modules], edges: [] };
         },
+        getDagInputs: () => {
+            const dag = StubDag();
+            const dataInputNames = dag.inEdges.map(([source, _]) => source);
+            const filteredInputs = R.filter(Object.entries(dag.data), ([uuid, _]) => dataInputNames.includes(uuid));
+
+            return R.fromEntries(filteredInputs);
+        }
     })
 );
 
