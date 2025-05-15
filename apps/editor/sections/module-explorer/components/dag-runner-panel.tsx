@@ -10,10 +10,15 @@ import {
     NumberInput,
     Checkbox,
     DateInput,
-    Spinner
+    Spinner,
+    Accordion,
+    AccordionItem,
 } from "@heroui/react";
 import { Panel } from "@xyflow/react";
 import { CSSProperties, useState } from "react";
+
+import JsonView from 'react18-json-view'
+import 'react18-json-view/src/style.css'
 
 import { GraphAreaApi } from "../../graph-area";
 import { isBoolean, isNumber, isTimestamp } from "@/apps/common/types-dsl";
@@ -72,8 +77,17 @@ const renderSingletonNode = (uuid: string, dataNodeSpec: any) => {
     }
 }
 
+const my_json_object = {
+    "name": "John",
+    "age": 30,
+    "city": "New York",
+    "isStudent": false,
+    "courses": ["Math", "Science", "History"],
+}
+
 export default function DagRunnerPanel() {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submittedSuccessfully, setSubmittedSuccessfully] = useState(null);
 
     const onSubmit = (e) => {
         e.preventDefault();
@@ -84,15 +98,15 @@ export default function DagRunnerPanel() {
         })
         const dataEntries = Object.fromEntries(entries)
         GraphAreaApi.runDagWithInputs(dataEntries)
-            .then(() => {
+            .then((context) => {
                 setIsSubmitting(false);
+                setSubmittedSuccessfully(context);
             })
             .catch((error) => {
                 console.error("Error running DAG:", error);
                 setIsSubmitting(false);
             });
     };
-
 
     const dataInputs = Object.entries(GraphAreaApi.getDagInputs());
 
@@ -118,14 +132,25 @@ export default function DagRunnerPanel() {
                         </CardHeader>
                         <Divider />
                         <CardBody>
-                            <div className="flex flex-col gap-4 w-full">
-                                {dataInputs.map(([uuid, dataNodeSpec]) => {
-                                    if (isSingletonNode(dataNodeSpec)) {
+                            <div className="grid grid-cols-1 gap-4">
+                                <div className="flex flex-col gap-4 w-full">
+                                    {dataInputs.map(([uuid, dataNodeSpec]) => {
                                         if (isSingletonNode(dataNodeSpec)) {
-                                            return renderSingletonNode(uuid, dataNodeSpec);
+                                            if (isSingletonNode(dataNodeSpec)) {
+                                                return renderSingletonNode(uuid, dataNodeSpec);
+                                            }
                                         }
-                                    }
-                                })}
+                                    })}
+                                </div>
+                                {submittedSuccessfully && (
+                                    <div className="flex flex-col gap-4 w-full">
+                                        <Accordion variant="splitted">
+                                            <AccordionItem key="1" aria-label="Raw response JSON" title="Raw response JSON">
+                                                <JsonView src={submittedSuccessfully} />
+                                            </AccordionItem>
+                                        </Accordion>
+                                    </div>
+                                )}
                             </div>
                         </CardBody>
                         <Divider />
