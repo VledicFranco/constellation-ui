@@ -356,23 +356,29 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             const newNodes = R.map(nodes, (node) => {
                 const contextData = context.loadedData[node.id];
 
-                if (!contextData) {
+                if (contextData) {
+                    const contextDataValue = contextData.data;
+                    var val = null;
+                    if (isNumber(contextDataValue.dataType.raw)) {
+                        val = contextDataValue.longValue || contextDataValue.doubleValue;
+                    } else if (isBoolean(contextDataValue.dataType.raw)) {
+                        val = contextDataValue.boolValue;
+                    } else if (isTimestamp(contextDataValue.dataType.raw)) {
+                        val = contextDataValue.timestampValue;
+                    } else {
+                        val = contextDataValue.stringValue;
+                    }
+                    node.data = { ...node.data, value: val };
                     return node;
-                }
-
-                const contextDataValue = contextData.data;
-                var val = null;
-                if (isNumber(contextDataValue.dataType.raw)) {
-                    val = contextDataValue.longValue || contextDataValue.doubleValue;
-                } else if (isBoolean(contextDataValue.dataType.raw)) {
-                    val = contextDataValue.boolValue;
-                } else if (isTimestamp(contextDataValue.dataType.raw)) {
-                    val = contextDataValue.timestampValue;
                 } else {
-                    val = contextDataValue.stringValue;
+                    const contextModule = context.moduleStatus[node.id];
+                    if (contextModule) {
+                        node.data = { ...node.data, ...contextModule };
+                        return node;
+                    } else {
+                        return node;
+                    }
                 }
-                node.data = { ...node.data, value: val };
-                return node;
             });
 
             get().setNodes(newNodes);

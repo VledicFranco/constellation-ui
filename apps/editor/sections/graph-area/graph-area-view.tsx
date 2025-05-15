@@ -76,11 +76,11 @@ function DagDataNode({ data, id }: NodeProps) {
     return (
         <div>
             <Handle type="target" position={Position.Top} isConnectable={true} />
-            <div className='grid grid-cols-1'>
+            <div className='grid grid-cols-1 gap-1'>
                 <div className='node-header'>{data.label}</div>
                 {data.value && (
                     <div className='node-value'>
-                        <Chip size="sm" color='primary'>{data.value}</Chip>
+                        <Chip size="sm" color='primary' variant='flat'>{data.value}</Chip>
                     </div>
                 )}
             </div>
@@ -90,6 +90,20 @@ function DagDataNode({ data, id }: NodeProps) {
 }
 
 function DagModuleNode({ data, id }: NodeProps) {
+
+    const moduleTagChipClass = (tag: string) => {
+        switch (data.tag) {
+            case 'fired':
+                return 'success';
+            case 'failed':
+                return 'danger';
+            case 'unfired':
+                return 'warning';
+            default:
+                return 'default';
+        }
+    };
+
     return (
         <>
             <NodeToolbar
@@ -105,9 +119,21 @@ function DagModuleNode({ data, id }: NodeProps) {
             </NodeToolbar >
             <div>
                 <Handle type="target" position={Position.Top} isConnectable={true} />
-                <div className="node-header">{data.label}</div>
+                <div className='grid grid-cols-1 gap-1'>
+                    <div className='node-header'>{data.label}</div>
+                    {data.tag && (
+                        <div className='node-value'>
+                            <Chip size="sm" variant='flat' color={moduleTagChipClass(data.tag)}>{data.tag}</Chip>
+                        </div>
+                    )}
+                    {data.latency && (
+                        <div className='node-value'>
+                            <Chip size="sm" variant='flat' color='primary'>{data.latency} ms</Chip>
+                        </div>
+                    )}
+                </div>
                 <Handle type="source" position={Position.Bottom} isConnectable={true} />
-            </div></>
+            </div ></>
     );
 }
 
