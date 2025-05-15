@@ -27,8 +27,20 @@ export type RawType = {
 }
 
 export type DataTypeLabel
-    = "Unknown" | "BooleanValue" | "FloatNumeric" | "IntNumeric" | "StringValue" 
+    = "Unknown" | "BooleanValue" | "FloatNumeric" | "IntNumeric" | "StringValue"
     | "Timestamp" | "Mapping" | "ListValue" | "Timeseries" | "Embedding"
+
+export const isNumber = (dataTypeLabel: string): boolean => {
+    return dataTypeLabel === "FloatNumeric" || dataTypeLabel === "IntNumeric"
+}
+
+export const isBoolean = (dataTypeLabel: string): boolean => {
+    return dataTypeLabel === "BooleanValue"
+}
+
+export const isTimestamp = (dataTypeLabel: string): boolean => {
+    return dataTypeLabel === "Timestamp"
+}
 
 export const DataTypes = {
 
@@ -77,7 +89,7 @@ export const DataTypes = {
         context: "ListingId",
         embeddingType: null
     } as DataType),
-    
+
     ListingId: ({
         raw: "IntNumeric",
         subType: null,

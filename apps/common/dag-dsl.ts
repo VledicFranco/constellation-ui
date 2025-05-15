@@ -1,6 +1,6 @@
 import { DataType } from "./types-dsl"
 
-export type DataNodeSpec 
+export type DataNodeSpec
     = {
         tag: "data-node-spec-singleton"
         name: string
@@ -16,6 +16,19 @@ export type DataNodeSpec
         name: string
         dtype: { [key: string]: DataType }
     }
+
+// Or with type narrowing using a type guard
+export function isSingletonNode(node: DataNodeSpec): node is DataNodeSpec & { tag: "data-node-spec-singleton" } {
+    return node.tag === "data-node-spec-singleton";
+}
+
+export function isProductNode(node: DataNodeSpec): node is DataNodeSpec & { tag: "data-node-spec-product" } {
+    return node.tag === "data-node-spec-product";
+}
+
+export function isCoproductNode(node: DataNodeSpec): node is DataNodeSpec & { tag: "data-node-spec-coproduct" } {
+    return node.tag === "data-node-spec-coproduct";
+}
 
 export type ModuleMetadata = {
     description: string
