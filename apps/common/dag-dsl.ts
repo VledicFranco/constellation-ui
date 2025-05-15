@@ -76,7 +76,7 @@ export type DataNode = {
 
 export type ModuleStatus 
     = { tag: "unfired" }
-    | { tag: "fired" }
+    | { tag: "fired", latency: number }
     | { tag: "failed", error: string }
 
 export type EngineContext = {
