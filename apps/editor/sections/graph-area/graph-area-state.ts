@@ -359,7 +359,9 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                 if (contextData) {
                     const contextDataValue = contextData.data;
                     var val = null;
-                    if (isNumber(contextDataValue.dataType.raw)) {
+                    if (contextDataValue.dataType.raw === 'ListValue') {
+                        val = `${contextDataValue.listValue?.length} alt-queries`
+                    } else if (isNumber(contextDataValue.dataType.raw)) {
                         val = contextDataValue.longValue || contextDataValue.doubleValue;
                     } else if (isBoolean(contextDataValue.dataType.raw)) {
                         val = contextDataValue.boolValue;
