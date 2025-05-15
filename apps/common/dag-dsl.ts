@@ -1,4 +1,4 @@
-import { error } from "console"
+import * as R from 'remeda'
 import { DataType, Value } from "./types-dsl"
 
 export type DataNodeSpec
@@ -74,7 +74,7 @@ export type DataNode = {
     data: Value
 }
 
-export type ModuleStatus 
+export type ModuleStatus
     = { tag: "unfired" }
     | { tag: "fired", latency: number }
     | { tag: "failed", error: string }
@@ -84,4 +84,9 @@ export type EngineContext = {
     dag: DagSpec
     moduleStatus: { [uuid: string]: ModuleStatus }
     loadedData: { [uuid: string]: DataNode }
+}
+
+export function getDagInputs(dag: DagSpec) {
+    const inIds = R.difference(Object.keys(dag.data), R.keys(dag.inEdges));
+    return Object.entries(dag.data).filter(([id, spec]) => inIds.includes(id))
 }
