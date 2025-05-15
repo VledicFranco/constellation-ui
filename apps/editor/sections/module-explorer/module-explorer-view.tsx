@@ -1,3 +1,4 @@
+import DagRunnerPanel from './components/dag-runner-panel';
 import ExplorerPanel from './components/explorer-panel';
 import ExplorerToggleButton from './components/explorer-toggle-button';
 
@@ -9,6 +10,7 @@ export default function ModuleExplorerView() {
 
     return (<>
         <ExplorerToggleButton position='top-right' onClick={state.togglePanel} />
-        {state.panelShown && <ExplorerPanel modules={state.modules} />}
+        {state.panelShown && state.activePanel === "explorer" && <ExplorerPanel modules={state.modules} />}
+        {state.panelShown && state.activePanel === "runner" && <DagRunnerPanel />}
     </>);
 }

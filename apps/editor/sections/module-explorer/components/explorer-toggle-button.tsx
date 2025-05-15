@@ -1,13 +1,14 @@
 import { ControlButton, Panel, PanelPosition } from "@xyflow/react";
-import { Cog } from "lucide-react";
+import { Cog, PlayCircle } from "lucide-react";
 
 import cc from 'classcat';
 import React, { CSSProperties, MouseEventHandler } from "react";
+import { Panel as ExplorerPanel } from "../module-explorer-state";
 
 export type ExplorerToggleButtonProperties = {
     position?: PanelPosition
     orientation?: 'horizontal' | 'vertical'
-    onClick?: MouseEventHandler<HTMLButtonElement>
+    onClick: (panel: ExplorerPanel) => void
 }
 
 export default function ExplorerToggleButton({
@@ -22,9 +23,17 @@ export default function ExplorerToggleButton({
         <ControlButton
             title='Toggle module explorer'
             aria-label='Toggle module explorer'
-            onClick={onClick}
+            onClick={() => onClick("explorer")}
             style={{ width: '40px', height: '40px' } as CSSProperties}>
             <Cog style={{ fill: 'none', maxWidth: '20px', maxHeight: '20px' } as CSSProperties} />
+        </ControlButton>
+
+        <ControlButton
+            title='Play DAG'
+            aria-label='Play DAG'
+            onClick={() => onClick("runner")}
+            style={{ width: '40px', height: '40px' } as CSSProperties}>
+            <PlayCircle style={{ fill: 'none', maxWidth: '20px', maxHeight: '20px' } as CSSProperties} />
         </ControlButton>
     </Panel>
 }

@@ -4,15 +4,12 @@ import { DataTypes } from "./types-dsl"
 const data1: DataNodeSpec = {
     tag: "data-node-spec-singleton",
     name: "Data 1",
-    dtype: DataTypes.String
+    dtype: DataTypes.Integer
 }
 const data2: DataNodeSpec = {
-    tag: "data-node-spec-product",
+    tag: "data-node-spec-singleton",
     name: "Data 2",
-    dtype: {
-        "a": DataTypes.String,
-        "b": DataTypes.Integer
-    }
+    dtype: DataTypes.String
 }
 const data3: DataNodeSpec = {
     tag: "data-node-spec-singleton",
@@ -27,7 +24,12 @@ const data4: DataNodeSpec = {
 const data5: DataNodeSpec = {
     tag: "data-node-spec-singleton",
     name: "Data 5",
-    dtype: DataTypes.String
+    dtype: DataTypes.Bool
+}
+const data6: DataNodeSpec = {
+    tag: "data-node-spec-singleton",
+    name: "Data 6",
+    dtype: DataTypes.Timestamp
 }
 
 const module1: ModuleNodeSpec = {
@@ -60,6 +62,7 @@ export const StubDag: () => DagSpec = () => {
     const data3UUID = "data-3-fixed-uuid"
     const data4UUID = "data-4-fixed-uuid"
     const data5UUID = "data-5-fixed-uuid"
+    const data6UUID = "data-6-fixed-uuid"
 
     return {
         tag: "dag-spec",
@@ -73,7 +76,8 @@ export const StubDag: () => DagSpec = () => {
             [data2UUID]: data2,
             [data3UUID]: data3,
             [data4UUID]: data4,
-            [data5UUID]: data5
+            [data5UUID]: data5,
+            [data6UUID]: data6
         },
         inEdges: [
             [data1UUID, module1UUID],
@@ -81,6 +85,7 @@ export const StubDag: () => DagSpec = () => {
             [data3UUID, module2UUID],
             [data5UUID, module1UUID],
             [data5UUID, module2UUID],
+            [data6UUID, module2UUID],
         ],
         outEdges: [
             [module1UUID, data3UUID],
