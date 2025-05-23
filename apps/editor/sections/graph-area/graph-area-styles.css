@@ -247,10 +247,10 @@
     display: inline-block;
 }
 
-.react-flow__node-dagData {
+.react-flow__node-data {
     border-color: #6fa3f7;
 }
 
-.react-flow__node-dagModule {
+.react-flow__node-module {
     border-color: #65ba84;
 }

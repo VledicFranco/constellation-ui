@@ -1,76 +1,69 @@
 import { create } from "zustand"
-import * as R from 'remeda';
+import * as R from "remeda";
 import { DagSpec, DataNodeSpec, emptyDag, EngineContext, ModuleNodeSpec } from "@/apps/common/dag-dsl"
-import { Node, Edge, NodeChange, EdgeChange, Connection, MarkerType, NodeRemoveChange, EdgeAddChange, getIncomers, getOutgoers } from "@xyflow/react"
-import { addEdge, applyNodeChanges, applyEdgeChanges } from '@xyflow/react';
+import { Edge, NodeChange, EdgeChange, Connection, MarkerType, NodeRemoveChange, getIncomers, getOutgoers } from "@xyflow/react"
+import { addEdge, applyNodeChanges, applyEdgeChanges } from "@xyflow/react";
 import EditorBackendApi from "../../editor-backend-api";
 import { useEffect } from "react";
 import { v4 } from "uuid";
+import { RenderedNode } from "./graph-area-dsl";
 
 export type GraphAreaState = {
     dag: DagSpec;
-    nodes: Node[];
+    nodes: RenderedNode[];
     edges: Edge[];
     // Add a method to transform DAG to React Flow nodes
     loadDag: (name: string) => Promise<void>;
-    transformDagToNodes: () => Node[];
-    onNodesChange: (changes: NodeChange[]) => Promise<void>;
+    transformDagToNodes: () => RenderedNode[];
+    onNodesChange: (changes: NodeChange<RenderedNode>[]) => Promise<void>;
     onEdgesChange: (changes: EdgeChange[]) => void;
     onConnect: (connection: Connection) => void;
-    setNodes: (nodes: Node[]) => void;
+    setNodes: (nodes: RenderedNode[]) => void;
     setEdges: (edges: Edge[]) => void;
     addModuleToDag: (module: ModuleNodeSpec) => Promise<void>;
     deleteNodeModule: (id: string) => void;
-    mergeDataNodes: (nodes: Node[]) => Promise<void>;
-    canBeDeleted: ({ nodes, edges }: { nodes: Node[], edges: Edge[] }) => Promise<boolean | { nodes: Node[], edges: Edge[] }>;
+    mergeDataNodes: (nodes: RenderedNode[]) => Promise<void>;
+    canBeDeleted: ({ nodes, edges }: { nodes: RenderedNode[], edges: Edge[] }) => Promise<boolean | { nodes: RenderedNode[], edges: Edge[] }>;
     getDagInputs: () => { [uuid: string]: DataNodeSpec };
     renderEngineContext: (context: EngineContext) => void;
 }
 
-// the following two variables are used to control the visibility and position of the toolbar
-// should only be applied to the dagModule node type
-const forceToolbarVisible = false; // Set this to true or false based on your requirement
-const toolbarPosition = 'right'; // Set this to 'top' or 'bottom' based on your requirement
-
 // Helper function to transform DAG to nodes
-const dagToNodes = (dag: DagSpec, old: Node[]): Node[] => {
-    const nodes: Node[] = [];
+const dagToNodes = (dag: DagSpec, oldNodes: RenderedNode[]): RenderedNode[] => {
+    const newNodes: RenderedNode[] = [];
 
     // Add module nodes
     Object.entries(dag.modules).forEach(([uuid, module], index) => {
-        nodes.push({
+        if (oldNodes.find((n) => n.id === uuid)) return
+        newNodes.push({
             id: uuid,
-            type: 'dagModule', // Make sure this matches exactly with the nodeTypes in the view
-            data: { label: module.name, id: uuid, forceToolbarVisible, toolbarPosition }, // Include id in data for easier access
+            type: "module", // Make sure this matches exactly with the nodeTypes in the view
+            data: { tag: "module", ...module }, // Include id in data for easier access
             position: { x: 250, y: index * 100 + 50 },
-        });
-    });
+        })
+    })
 
     // Add data nodes
     Object.entries(dag.data).forEach(([uuid, data], index) => {
-        nodes.push({
+        if (oldNodes.find((n) => n.id === uuid)) return
+        newNodes.push({
             id: uuid,
-            type: 'dagData', // Make sure this matches exactly with the nodeTypes in the view
-            data: { label: data.name, id: uuid }, // Include id in data for easier access
+            type: "data", // Make sure this matches exactly with the nodeTypes in the view
+            data: { tag: "data", ...data }, // Include id in data for easier access
             position: { x: 50, y: index * 100 + 50 },
         });
     });
 
-    const newNodes = nodes.map((node) => {
-        const oldNode = old.find((n) => n.id === node.id);
-        if (oldNode) {
-            return {
-                ...node,
-                position: oldNode.position,
-                data: {
-                    ...node.data,
-                    value: oldNode.data.value,
-                },
-            };
-        }
-        return node;
-    });
-    return newNodes;
+    const ketpNodes = oldNodes.filter((node) => {
+        if (node.type === "module") 
+            return dag.modules[node.id] !== undefined
+        else if (node.type === "data")
+            return dag.data[node.id] !== undefined
+        else
+            return true
+    })
+
+    return [...ketpNodes, ...newNodes]
 };
 
 const dagToEdges = (dag: DagSpec): Edge[] => {
@@ -82,35 +75,35 @@ const dagToEdges = (dag: DagSpec): Edge[] => {
             source,
             target,
             animated: true,
-            style: { stroke: '#f6ab00' },
-            type: 'smoothstep',
+            style: { stroke: "#f6ab00" },
+            type: "smoothstep",
             markerEnd: {
                 type: MarkerType.ArrowClosed,
-                color: '#f6ab00',
+                color: "#f6ab00",
             },
         });
     });
     return edges;
 };
 
-type SCNode = { type: "state-change-node", change: NodeChange }
-type SCEdge = { type: "state-change-edge", change: EdgeChange }
-type SCDag = { type: "state-change-dag", change: DagSpec }
-type StateChange = SCNode | SCEdge | SCDag
+type StateChangeNode = { type: "state-change", change: NodeChange<RenderedNode> }
+type StateChangeEdge = { type: "state-change-edge", change: EdgeChange }
+type StateChangeDag = { type: "state-change-dag", change: DagSpec }
+type StateChange = StateChangeNode | StateChangeEdge | StateChangeDag
 
-function scNode(change: NodeChange): StateChange {
-    return ({ type: "state-change-node", change })
+function StateChangeNode(change: NodeChange<RenderedNode>): StateChange {
+    return ({ type: "state-change", change })
 }
-function scEdge(change: EdgeChange): StateChange {
+function StateChangeEdge(change: EdgeChange): StateChange {
     return ({ type: "state-change-edge", change })
 }
-function scDag(change: DagSpec): StateChange {
+function StateChangeDag(change: DagSpec): StateChange {
     return ({ type: "state-change-dag", change })
 }
 
 export const useGraphAreaStore = create<GraphAreaState>()(
     (set, get) => ({
-        dag: emptyDag,
+        dag: emptyDag(),
         nodes: [],
         edges: [],
         loadDag: async (name: string) => {
@@ -124,12 +117,12 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             set({ nodes });
             return nodes;
         },
-        onNodesChange: async (changes: NodeChange[]) => {
+        onNodesChange: async (changes: NodeChange<RenderedNode>[]) => {
             const state = get();
             const newChanges: StateChange[] = changes.flatMap((change) => {
-                if (change.type === 'position' && !change.dragging) {
+                if (change.type === "position" && !change.dragging) {
                     const node = state.nodes.filter((node) => node.id === change.id)[0]
-                    if (node.type !== 'dagData') return [scNode(change)];
+                    if (node.type !== "data") return [StateChangeNode(change)];
                     const intersectingNode = state.nodes.filter((n) => {
                         if (n.id === node.id) return false;
                         const dx = Math.abs(node.position.x - n.position.x);
@@ -137,15 +130,15 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                         const distance = Math.sqrt(dx * dx + dy * dy);
                         return distance < 50
                     })[0];
-                    if (intersectingNode && intersectingNode.type === 'dagData') {
+                    if (intersectingNode && intersectingNode.type === "data") {
                         console.log("intersecting node", intersectingNode)
                         const dagLandingNode = state.dag.data[intersectingNode.id];
                         const dagDraggingNode = state.dag.data[node.id];
-                        if (!R.isDeepEqual(dagLandingNode.cType, dagDraggingNode.cType)) return [scNode(change)]
+                        if (!R.isDeepEqual(dagLandingNode.cType, dagDraggingNode.cType)) return [StateChangeNode(change)]
                         console.log("kek")
                         const removeChange: NodeRemoveChange = {
                             id: node.id,
-                            type: 'remove'
+                            type: "remove"
                         }
                         const inc = getIncomers(node, state.nodes, state.edges)
                         const incomers: EdgeChange[] = inc.map((n) => {
@@ -156,11 +149,11 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                                     source: n.id,
                                     target: intersectingNode.id,
                                     animated: true,
-                                    style: { stroke: '#f6ab00' },
-                                    type: 'smoothstep',
+                                    style: { stroke: "#f6ab00" },
+                                    type: "smoothstep",
                                     markerEnd: {
                                         type: MarkerType.ArrowClosed,
-                                        color: '#f6ab00',
+                                        color: "#f6ab00",
                                     },
                                 }
                             }
@@ -174,16 +167,16 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                                     source: intersectingNode.id,
                                     target: n.id,
                                     animated: true,
-                                    style: { stroke: '#f6ab00' },
-                                    type: 'smoothstep',
+                                    style: { stroke: "#f6ab00" },
+                                    type: "smoothstep",
                                     markerEnd: {
                                         type: MarkerType.ArrowClosed,
-                                        color: '#f6ab00',
+                                        color: "#f6ab00",
                                     },
                                 }
                             }
                         })
-                        const addEdges: StateChange[] = incomers.concat(outgoers).map(x => scEdge(x))
+                        const addEdges: StateChange[] = incomers.concat(outgoers).map(x => StateChangeEdge(x))
                         const removedDagInEdges: [string, string][] = state.dag.inEdges.filter(([source, target]) => source !== node.id);
                         const removedDagOutEdges: [string, string][] = state.dag.outEdges.filter(([source, target]) => target !== node.id);
                         const addedDagInEdges: [string, string][] = out.map(x => [intersectingNode.id, x.id])
@@ -202,14 +195,14 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                             inEdges: [...removedDagInEdges, ...addedDagInEdges],
                             outEdges: [...removedDagOutEdges, ...addedDagOutEdges],
                         }
-                        return [scNode(removeChange), ...addEdges, scDag(newDag)]
+                        return [StateChangeNode(removeChange), ...addEdges, StateChangeDag(newDag)]
                     } else
-                        return [scNode(change)];
+                        return [StateChangeNode(change)];
                 } else
-                    return [scNode(change)];
+                    return [StateChangeNode(change)];
             });
 
-            const nodeChanges: NodeChange[] = newChanges.filter(x => x.type == "state-change-node").map(x => x.change)
+            const nodeChanges: NodeChange<RenderedNode>[] = newChanges.filter(x => x.type == "state-change").map(x => x.change)
             const edgeChanges: EdgeChange[] = newChanges.filter(x => x.type == "state-change-edge").map(x => x.change)
             const dagChanges = newChanges.filter(x => x.type == "state-change-dag").map(x => x.change)[0]
             const dag = dagChanges ? dagChanges : state.dag
@@ -230,7 +223,7 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                 edges: addEdge(connection, get().edges),
             });
         },
-        setNodes: (nodes: Node[]) => {
+        setNodes: (nodes: RenderedNode[]) => {
             set({ nodes });
         },
         setEdges: (edges: Edge[]) => {
@@ -265,12 +258,12 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             const modules = R.filter(Object.entries(dag.modules), ([moduleId, _]) => moduleId !== id);
             set({ dag: { ...dag, modules: R.fromEntries(modules) } });
         },
-        mergeDataNodes: async (nodes: Node[]) => {
+        mergeDataNodes: async (nodes: RenderedNode[]) => {
             console.log(nodes)
         },
-        canBeDeleted: async ({ nodes, edges }: { nodes: Node[], edges: Edge[] }) => {
+        canBeDeleted: async ({ nodes, edges }: { nodes: RenderedNode[], edges: Edge[] }) => {
             // Implement your logic to check if the nodes and edges can be deleted
-            const modules = nodes.filter(node => node.type === 'dagModule');
+            const modules = nodes.filter(node => node.type === "module");
 
             if (modules.length < 1) {
                 return false;
@@ -278,7 +271,7 @@ export const useGraphAreaStore = create<GraphAreaState>()(
 
             const dag = get().dag;
 
-            const moduleIds = modules.map((module) => module.data.id) as string[];
+            const moduleIds = modules.map((module) => module.id) as string[];
             const moduleInputs = edges.filter(edge => edge.target === modules[0].id);
             const moduleInputsSources = moduleInputs.map(edge => edge.source);
             /**
@@ -372,36 +365,16 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             return R.fromEntries(filteredInputs);
         },
         renderEngineContext: (context: EngineContext) => {
-            console.log("renderEngineContext", context)
-            // Implement your logic to render the engine context
-
-            const dag = get().dag;
-            const nodes = dagToNodes(dag, get().nodes)
-
-            const newNodes = R.map(nodes, (node) => {
-                const contextData = context.loadedData[node.id];
-
-                if (contextData) {
-                    var val = null;
-                    if (contextData.tag === "list") {
-                        const xs = contextData.value.map((x) => x.value.toString())
-                        val = xs.join(", ")
-                    } else 
-                        val = contextData.value.toString()
-                    node.data = { ...node.data, value: val };
-                    return node;
-                } else {
-                    const contextModule = context.moduleStatus[node.id];
-                    if (contextModule) {
-                        node.data = { ...node.data, ...contextModule };
-                        return node;
-                    } else {
-                        return node;
-                    }
-                }
-            });
-
-            get().setNodes(newNodes);
+            const newNodes: RenderedNode[] = get().nodes.map((node) => {
+                if (node.type == "data" && node.data.tag == "data") {
+                    return { ...node, data: { ...node.data, value: context.loadedData[node.id] } }
+                } else if (node.type == "module" && node.data.tag == "module") {
+                    return {...node, data: { ...node.data, status: context.moduleStatus[node.id] }}
+                } else 
+                    throw new Error("Unknown node type")
+            })
+            console.log("newNodes", newNodes)
+            set({ nodes: newNodes })
         },
     })
 );

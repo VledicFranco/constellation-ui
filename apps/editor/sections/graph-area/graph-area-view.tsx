@@ -1,5 +1,5 @@
-import Dagre from '@dagrejs/dagre';
-import { useMemo, useEffect, useState, useCallback, CSSProperties } from 'react';
+import Dagre from "@dagrejs/dagre";
+import { useEffect, useState, useCallback, CSSProperties } from "react";
 import {
     ReactFlow,
     MiniMap,
@@ -8,24 +8,22 @@ import {
     BackgroundVariant,
     Handle,
     Position,
-    NodeProps,
     Panel,
     ControlButton,
     NodeToolbar,
-    Node,
     Edge,
-    useReactFlow
-} from '@xyflow/react';
+} from "@xyflow/react";
 import { MoveHorizontal, MoveVertical, Info } from "lucide-react";
-import '@xyflow/react/dist/style.css';
-import './graph-area-styles.css';
+import "@xyflow/react/dist/style.css";
+import "./graph-area-styles.css";
 
-import { useShallow } from 'zustand/react/shallow';
+import { useShallow } from "zustand/react/shallow";
 import { GraphAreaState, useGraphAreaStore, useInitGraphAreaState } from "./graph-area-state";
-import { merge } from 'remeda';
-import { Chip } from '@heroui/react';
+import { Chip } from "@heroui/react";
+import { ModuleStatus, parseCValueToString } from "@/apps/common/dag-dsl"
+import { RenderedNode, RenderedNodeProps, RenderedNodeType } from "./graph-area-dsl";
 
-const getLayoutedElements = (nodes: Node[], edges: Edge[], options: { direction: string }) => {
+const getLayoutedElements = (nodes: RenderedNode[], edges: Edge[], options: { direction: string }) => {
     const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
     g.setGraph({ rankdir: options.direction });
 
@@ -72,15 +70,17 @@ interface GraphAreaViewProps {
 }
 
 // Update node components to use NodeProps type for better type safety
-function DagDataNode({ data, id }: NodeProps) {
+function DagDataNode({ data }: RenderedNodeProps) {
+    if (data.tag !== "data") throw new Error("Invalid node type")
+    
     return (
         <div>
             <Handle type="target" position={Position.Top} isConnectable={true} />
-            <div className='grid grid-cols-1 gap-1'>
-                <div className='node-header'>{data.label}</div>
+            <div className="grid grid-cols-1 gap-1">
+                <div className="node-header">{data.name}</div>
                 {data.value && (
-                    <div className='node-value'>
-                        <Chip size="sm" color='primary' variant='flat'>{data.value}</Chip>
+                    <div className="node-value">
+                        <Chip size="sm" color="primary" variant="flat">{parseCValueToString(data.value)}</Chip>
                     </div>
                 )}
             </div>
@@ -89,80 +89,81 @@ function DagDataNode({ data, id }: NodeProps) {
     );
 }
 
-function DagModuleNode({ data, id }: NodeProps) {
+function DagModuleNode({ data }: RenderedNodeProps) {
+    if (data.tag !== "module") throw new Error("Invalid node type")
 
-    const moduleTagChipClass = (tag: string) => {
-        switch (data.tag) {
-            case 'fired':
-                return 'success';
-            case 'failed':
-                return 'danger';
-            case 'unfired':
-                return 'warning';
+    const moduleTagChipClass = (status: ModuleStatus) => {
+        switch (status.tag) {
+            case "fired":
+                return "success";
+            case "failed":
+                return "danger";
+            case "timed":
+                return "warning";
+            case "unfired":
+                return "warning";
             default:
-                return 'default';
-        }
-    };
-
-    const message = (d) => {
-        switch (d.tag) {
-            case 'fired':
-                return 'fired';
-            case 'failed':
-                return 'e: ' + d.error;
-            case 'unfired':
-                return 'unfired';
-            default:
-                return 'default';
+                return "default";
         }
     }
 
-    return (
-        <>
-            <NodeToolbar
-                className='border-gray-300 border-1 rounded-sm shadow-md'
-                isVisible={data.forceToolbarVisible || undefined}
-                position={data.toolbarPosition}
-            >
-                <button onClick={() => {
-                    // TODO: open module explorer
-                }}>
-                    <Info style={{ fill: 'none', maxWidth: '15px', maxHeight: '15px' } as CSSProperties} />
-                </button>
-            </NodeToolbar >
-            <div>
-                <Handle type="target" position={Position.Top} isConnectable={true} />
-                <div className='grid grid-cols-1 gap-1'>
-                    <div className='node-header'>{data.label}</div>
-                    {data.tag && (
-                        <div className='node-value'>
-                            <Chip size="sm" variant='flat' color={moduleTagChipClass(data.tag)}>{message(data)}</Chip>
-                        </div>
-                    )}
-                    {data.latency && (
-                        <div className='node-value'>
-                            <Chip size="sm" variant='flat' color='primary'>{data.latency} ms</Chip>
-                        </div>
-                    )}
-                </div>
-                <Handle type="source" position={Position.Bottom} isConnectable={true} />
-            </div ></>
-    );
+    const message = (status: ModuleStatus) => {
+        switch (status.tag) {
+            case "fired":
+                return "fired: " + status.latency + "ms";
+            case "failed":
+                return "error: " + status.error;
+            case "timed":
+                return "timed: " + status.latency + "ms";
+            case "unfired":
+                return "unfired";
+            default:
+                return "default";
+        }
+    }
+
+    return <>
+        <NodeToolbar
+            className="border-gray-300 border-1 rounded-sm shadow-md"
+            isVisible={false}
+            position={Position.Right}
+        >
+            <button onClick={() => {
+                // TODO: open module explorer
+            }}>
+                <Info style={{ fill: "none", maxWidth: "15px", maxHeight: "15px" } as CSSProperties} />
+            </button>
+        </NodeToolbar >
+        <div>
+            <Handle type="target" position={Position.Top} isConnectable={true} />
+            <div className="grid grid-cols-1 gap-1">
+                <div className="node-header">{data.name}</div>
+                {data.status && (
+                    <div className="node-value">
+                        <Chip size="sm" variant="flat" color={moduleTagChipClass(data.status)}>{message(data.status)}</Chip>
+                    </div>
+                )}
+            </div>
+            <Handle type="source" position={Position.Bottom} isConnectable={true} />
+        </div >
+    </>
+}
+
+const nodeTypes: Record<RenderedNodeType, (props: RenderedNodeProps) => JSX.Element> = {
+    "data": DagDataNode,
+    "module": DagModuleNode,
 }
 
 interface GraphAreaViewProps {
-    dagName: string
+    dagName: string,
+    children?: React.ReactNode
 }
 
-export default function GraphAreaView({ children, dagName }: GraphAreaViewProps & GraphAreaViewProps) {
+export default function GraphAreaView({ children, dagName }: GraphAreaViewProps) {
 
     useInitGraphAreaState(dagName);
 
     // The issue might be here - make sure nodeTypes keys match the node type in your store
-    const nodeTypes = useMemo(() => ({
-        dagData: DagDataNode,
-        dagModule: DagModuleNode,
-    }), []);
 
     const { nodes, edges, onNodesChange, onEdgesChange, onConnect, setNodes, setEdges, attemptModuleDeletion, mergeDataNodes } = useGraphAreaStore(useShallow(selector));
 
@@ -184,20 +185,20 @@ export default function GraphAreaView({ children, dagName }: GraphAreaViewProps 
 
     // Only render ReactFlow on the client to avoid hydration issues
     if (!isClient) {
-        return <div className="border-gray-300 border-1 rounded-md" style={{ width: '99vw', height: '89vh' }}>
+        return <div className="border-gray-300 border-1 rounded-md" style={{ width: "99vw", height: "89vh" }}>
             Loading graph...
         </div>;
     }
 
     return (
-        <div id="graph-area" className="border-gray-300 border-1 rounded-md" style={{ width: '99vw', height: '89vh' }}>
+        <div id="graph-area" className="border-gray-300 border-1 rounded-md" style={{ width: "99vw", height: "89vh" }}>
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
-                nodeTypes={nodeTypes} /* Fixed variable name from noteTypes to nodeTypes */
+                nodeTypes={nodeTypes} 
                 onBeforeDelete={attemptModuleDeletion}
                 attributionPosition="bottom-left"
                 fitView>
@@ -205,22 +206,22 @@ export default function GraphAreaView({ children, dagName }: GraphAreaViewProps 
                 {children}
                 <MiniMap />
                 <Panel id="explorer-toggle-button"
-                    className={'vertical border-gray-300 border-1 rounded-sm w-60'}
+                    className={"vertical border-gray-300 border-1 rounded-sm w-60"}
                     position={"top-left"}
                     aria-label="Module Explorer toggle button">
                     <ControlButton
-                        title='vertical layout'
-                        aria-label='vertical layout'
-                        onClick={() => onLayout('LR')}
-                        style={{ width: '40px', height: '40px' } as CSSProperties}>
-                        <MoveHorizontal style={{ fill: 'none', maxWidth: '20px', maxHeight: '20px' } as CSSProperties} />
+                        title="vertical layout"
+                        aria-label="vertical layout"
+                        onClick={() => onLayout("LR")}
+                        style={{ width: "40px", height: "40px" } as CSSProperties}>
+                        <MoveHorizontal style={{ fill: "none", maxWidth: "20px", maxHeight: "20px" } as CSSProperties} />
                     </ControlButton>
                     <ControlButton
-                        title='vertical layout'
-                        aria-label='vertical layout'
-                        onClick={() => onLayout('TB')}
-                        style={{ width: '40px', height: '40px' } as CSSProperties}>
-                        <MoveVertical style={{ fill: 'none', maxWidth: '20px', maxHeight: '20px' } as CSSProperties} />
+                        title="vertical layout"
+                        aria-label="vertical layout"
+                        onClick={() => onLayout("TB")}
+                        style={{ width: "40px", height: "40px" } as CSSProperties}>
+                        <MoveVertical style={{ fill: "none", maxWidth: "20px", maxHeight: "20px" } as CSSProperties} />
                     </ControlButton>
                 </Panel>
                 <Background variant={BackgroundVariant.Dots} gap={12} size={1} />

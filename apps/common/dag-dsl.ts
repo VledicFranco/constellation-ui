@@ -40,12 +40,6 @@ export type ModuleMetadata = {
     version: string
 }
 
-export const emptyModuleMetadata: ModuleMetadata = {
-    description: "",
-    tags: [],
-    version: "0.0.0"
-}
-
 export type ModuleNodeSpec = {
     name: string
     metadata: ModuleMetadata
@@ -59,14 +53,6 @@ export type DagSpec = {
     data: { [uuid: string]: DataNodeSpec }
     inEdges: [string, string][] // data node -> module node
     outEdges: [string, string][] // module node -> data node
-}
-
-export const emptyDag: DagSpec = {
-    name: "empty-dag",
-    modules: {},
-    data: {},
-    inEdges: [],
-    outEdges: []
 }
 
 export type ModuleStatus
@@ -83,7 +69,58 @@ export type EngineContext = {
     latency: number
 }
 
+export function emptyDag(): DagSpec {
+    return {
+        name: "empty-dag",
+        modules: {},
+        data: {},
+        inEdges: [],
+        outEdges: []
+    }
+}
+
 export function getDagInputs(dag: DagSpec) {
     const inIds = R.difference(Object.keys(dag.data), R.keys(dag.inEdges))
     return Object.entries(dag.data).filter(([id, spec]) => inIds.includes(id))
+}
+
+export function parseStringToCValue(cType: CType, value: string): CValue {
+    if (cType.tag === "string")
+        return { tag: "string", value }
+    else if (cType.tag === "integer")
+        return { tag: "integer", value: parseInt(value) }
+    else if (cType.tag === "float")
+        return { tag: "float", value: parseFloat(value) }
+    else if (cType.tag === "boolean")
+        return { tag: "boolean", value: value === "true" }
+    else if (cType.tag === "list") {
+        const values = value.split(",").map(v => v.trim())
+        return { tag: "list", value: values.map(v => parseStringToCValue(cType.valuesType, v)), valuesType: cType.valuesType }
+    }
+    else 
+        throw new Error(`Unsupported CType: ${cType.tag}`)
+}
+
+export function parseCValueToString(cValue: CValue): string {
+    if (cValue.tag === "string")
+        return cValue.value
+    else if (cValue.tag === "integer")
+        return cValue.value.toString()
+    else if (cValue.tag === "float")
+        return cValue.value.toString()
+    else if (cValue.tag === "boolean")
+        return cValue.value ? "true" : "false"
+    else if (cValue.tag === "list") {
+        return cValue.value.map(v => parseCValueToString(v)).join(", ")
+    }
+    else 
+        throw new Error(`Unsupported CValue: ${cValue.tag}`)
+}
+
+export function emptyModuleMetadata(): ModuleMetadata {
+    return {
+        description: "",
+        tags: [],
+        version: "0.0.0"
+    }
 }
