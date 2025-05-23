@@ -39,6 +39,9 @@ export default function ModuleNodeComponent({ data }: RenderedNodeProps) {
         }
     }
 
+    const handlePositionTarget = data.preferredLayout === "TB" ? Position.Top : Position.Left
+    const handlePositionSource = data.preferredLayout === "TB" ? Position.Bottom : Position.Right
+
     return <>
         <NodeToolbar
             className="border-gray-300 border-1 rounded-sm shadow-md"
@@ -52,7 +55,7 @@ export default function ModuleNodeComponent({ data }: RenderedNodeProps) {
             </button>
         </NodeToolbar >
         <div>
-            <Handle type="target" position={Position.Top} isConnectable={false} />
+            <Handle type="target" position={handlePositionTarget} isConnectable={false} />
             <div className="grid grid-cols-1 gap-1">
                 <div className="node-header">{data.name}</div>
                 {data.status && (
@@ -61,7 +64,7 @@ export default function ModuleNodeComponent({ data }: RenderedNodeProps) {
                     </div>
                 )}
             </div>
-            <Handle type="source" position={Position.Bottom} isConnectable={false} />
+            <Handle type="source" position={handlePositionSource} isConnectable={false} />
         </div >
     </>
 }

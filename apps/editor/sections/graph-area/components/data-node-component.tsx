@@ -5,10 +5,11 @@ import { parseCValueToString } from "@/apps/common/dag-dsl";
 
 export default function DataNodeComponent({ data }: RenderedNodeProps) {
     if (data.tag !== "data") throw new Error("Invalid node type")
-    
+    const handlePositionTarget = data.preferredLayout === "TB" ? Position.Top : Position.Left
+    const handlePositionSource = data.preferredLayout === "TB" ? Position.Bottom : Position.Right
     return (
         <div>
-            <Handle type="target" position={Position.Top} isConnectable={false} />
+            <Handle type="target" position={handlePositionTarget} isConnectable={false} />
             <div className="grid grid-cols-1 gap-1">
                 <div className="node-header">{data.name}</div>
                 {data.value && (
@@ -17,7 +18,7 @@ export default function DataNodeComponent({ data }: RenderedNodeProps) {
                     </div>
                 )}
             </div>
-            <Handle type="source" position={Position.Bottom} isConnectable={false} />
+            <Handle type="source" position={handlePositionSource} isConnectable={false} />
         </div>
     );
 }

@@ -22,8 +22,7 @@ const selector = (state: GraphAreaState) => ({
     edges: state.edges,
     onNodesChange: state.onNodesChange,
     onEdgesChange: state.onEdgesChange,
-    setNodes: state.setNodes,
-    setEdges: state.setEdges,
+    onLayoutPress: state.onLayoutPress,
     attemptModuleDeletion: state.canBeDeleted,
 });
 
@@ -64,11 +63,7 @@ export default function GraphAreaView({ children, dagName }: GraphAreaViewProps)
                 fitView>
                 <Controls />
                 {children}
-                <LayoutPanel
-                    nodes={g.nodes}
-                    edges={g.edges}
-                    setNodes={g.setNodes}
-                    setEdges={g.setEdges} />
+                <LayoutPanel onLayoutPress={g.onLayoutPress} />
                 <MiniMap />
                 <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
             </ReactFlow>

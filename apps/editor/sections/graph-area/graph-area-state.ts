@@ -1,12 +1,12 @@
 import { create } from "zustand"
 import * as R from "remeda"
 import { DagSpec, DataNodeSpec, emptyDag, EngineContext, ModuleNodeSpec } from "@/apps/common/dag-dsl"
-import { Edge, NodeChange, EdgeChange, Connection, MarkerType, NodeRemoveChange, getIncomers, getOutgoers } from "@xyflow/react"
+import { Edge, NodeChange, EdgeChange, Connection, MarkerType, NodeRemoveChange, getIncomers, getOutgoers, Position } from "@xyflow/react"
 import { addEdge, applyNodeChanges, applyEdgeChanges } from "@xyflow/react"
 import EditorBackendApi from "../../editor-backend-api"
 import { useEffect } from "react"
 import { v4 } from "uuid"
-import { RenderedNode } from "./graph-area-dsl"
+import { LayoutDirection, RenderedNode } from "./graph-area-dsl"
 import Dagre from "@dagrejs/dagre"
 
 type RenderAction 
@@ -17,7 +17,7 @@ type Graph = { nodes: RenderedNode[], edges: Edge[] }
 
 type GraphRender = Graph & { dag: DagSpec, lastAction: RenderAction }
 
-function renderDag(dag: DagSpec, state: Graph): GraphRender {
+function renderDag(dag: DagSpec, state: Graph & { preferredLayout: LayoutDirection } ): GraphRender {
 
     const dagToNodes = () => {
         const newNodes: RenderedNode[] = []
@@ -28,7 +28,7 @@ function renderDag(dag: DagSpec, state: Graph): GraphRender {
             newNodes.push({
                 id: uuid,
                 type: "module", // Make sure this matches exactly with the nodeTypes in the view
-                data: { tag: "module", ...module }, // Include id in data for easier access
+                data: { tag: "module", ...module, preferredLayout: state.preferredLayout }, // Include id in data for easier access
                 position: { x: 250, y: index * 100 + 50 },
             })
         })
@@ -39,7 +39,7 @@ function renderDag(dag: DagSpec, state: Graph): GraphRender {
             newNodes.push({
                 id: uuid,
                 type: "data", // Make sure this matches exactly with the nodeTypes in the view
-                data: { tag: "data", ...data }, // Include id in data for easier access
+                data: { tag: "data", ...data, preferredLayout: state.preferredLayout }, // Include id in data for easier access
                 position: { x: 50, y: index * 100 + 50 },
             })
         })
@@ -77,7 +77,7 @@ function renderDag(dag: DagSpec, state: Graph): GraphRender {
     return { dag, nodes: dagToNodes(), edges: dagToEdges(), lastAction: "graph-render" }
 }
 
-function layoutNodes(nodes: RenderedNode[], edges: Edge[], options: { direction: string }): Graph {
+export function layoutNodes(nodes: RenderedNode[], edges: Edge[], options: { direction:  LayoutDirection }): Graph {
     const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
     g.setGraph({ rankdir: options.direction });
 
@@ -100,7 +100,13 @@ function layoutNodes(nodes: RenderedNode[], edges: Edge[], options: { direction:
             const x = position.x - (node.measured?.width ?? 0) / 2;
             const y = position.y - (node.measured?.height ?? 0) / 2;
 
-            return { ...node, position: { x, y } };
+            return { 
+                ...node, 
+                data: { ...node.data, preferredLayout: options.direction }, 
+                position: { x, y },
+                sourcePosition: options.direction === "TB" ? Position.Bottom : Position.Right,
+                targetPosition: options.direction === "TB" ? Position.Top : Position.Left,
+            };
         }),
         edges,
     };
@@ -126,15 +132,15 @@ export type GraphAreaState = {
     dag: DagSpec
     nodes: RenderedNode[]
     edges: Edge[]
+    preferredLayout: LayoutDirection 
     lastAction?: RenderAction
     // Add a method to transform DAG to React Flow nodes
     loadDag: (name: string) => Promise<void>
 
     onNodesChange: (changes: NodeChange<RenderedNode>[]) => Promise<void>
     onEdgesChange: (changes: EdgeChange[]) => void
-    setNodes: (nodes: RenderedNode[]) => void
-    setEdges: (edges: Edge[]) => void
 
+    onLayoutPress: (layout: LayoutDirection) => void
     addModuleToDag: (module: ModuleNodeSpec) => Promise<void>
     deleteNodeModule: (id: string) => void
     canBeDeleted: ({ nodes, edges }: Graph) => Promise<boolean | Graph>
@@ -147,16 +153,19 @@ export const useGraphAreaStore = create<GraphAreaState>()(
         dag: emptyDag(),
         nodes: [],
         edges: [],
+        preferredLayout: "TB",
+
         loadDag: async (name: string) => {
             const dag = await EditorBackendApi.getDag(name)
             const graph = renderDag(dag, get())
             set(graph)
         },
+
         onNodesChange: async (changes: NodeChange<RenderedNode>[]) => {
             
             if (get().lastAction === "graph-render") {
                 const changedNodes = applyNodeChanges(changes, get().nodes)
-                const layout = layoutNodes(changedNodes, get().edges, { direction: "TB" })
+                const layout = layoutNodes(changedNodes, get().edges, { direction: get().preferredLayout })
                 return set({ ...layout, lastAction: undefined })
             }
 
@@ -252,7 +261,7 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                 const layout = layoutNodes(
                     applyNodeChanges(nodeChanges, state.nodes), 
                     applyEdgeChanges(edgeChanges, state.edges), 
-                    { direction: "TB" }
+                    { direction: get().preferredLayout }
                 )
                 set({
                     dag: dagChanges,
@@ -263,22 +272,21 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                 set({  nodes: applyNodeChanges(changes, state.nodes) })
             }
         },
+
         onEdgesChange: (changes: EdgeChange[]) => {
             set({
                 edges: applyEdgeChanges(changes, get().edges),
             })
         },
-        setNodes: (nodes: RenderedNode[]) => {
-            set({ nodes })
-        },
-        setEdges: (edges: Edge[]) => {
-            set({ edges })
+
+        onLayoutPress: (layout:  LayoutDirection) => {
+            const graph = layoutNodes(get().nodes, get().edges, { direction: layout })
+            set({ ...graph, preferredLayout: layout })
         },
 
         addModuleToDag: async (module: ModuleNodeSpec) => {
             const dag = get().dag
             const uuid = v4()
-            console.log(module)
             const newDataIn = Object.keys(module.consumes).reduce((acc, name) => 
                 ({ ...acc, [v4()]: { name, nicknames: { [uuid]: name }, cType: module.consumes[name] } })
             , {} as { [uuid: string]: DataNodeSpec })
@@ -412,8 +420,7 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                 } else 
                     throw new Error("Unknown node type")
             })
-            console.log("newNodes", newNodes)
-            set({ nodes: newNodes })
+            set({ nodes: newNodes, lastAction: "graph-render" })
         },
     })
 )
