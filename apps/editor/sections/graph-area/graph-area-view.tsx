@@ -1,54 +1,20 @@
-import Dagre from "@dagrejs/dagre";
 import {
     Background,
     BackgroundVariant,
-    ControlButton,
     Controls,
-    Edge,
     MiniMap,
-    Panel,
     ReactFlow
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { MoveHorizontal, MoveVertical } from "lucide-react";
-import { CSSProperties, useCallback, useEffect, useState } from "react";
 import "./graph-area-styles.css";
 
+import { useConstellationTheme, useIsClient } from "@/apps/common/common-hooks";
 import { useShallow } from "zustand/react/shallow";
 import DataNodeComponent from "./components/data-node-component";
 import ModuleNodeComponent from "./components/module-node-component";
-import { RenderedNode, RenderedNodeProps, RenderedNodeType } from "./graph-area-dsl";
+import { RenderedNodeProps, RenderedNodeType } from "./graph-area-dsl";
 import { GraphAreaState, useGraphAreaStore, useInitGraphAreaState } from "./graph-area-state";
-import {useTheme} from "next-themes";
-
-function getLayoutedElements(nodes: RenderedNode[], edges: Edge[], options: { direction: string }): { nodes: RenderedNode[], edges: Edge[] } {
-    const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
-    g.setGraph({ rankdir: options.direction });
-
-    edges.forEach((edge) => g.setEdge(edge.source, edge.target));
-    nodes.forEach((node) =>
-        g.setNode(node.id, {
-            ...node,
-            width: node.measured?.width ?? 0,
-            height: node.measured?.height ?? 0,
-        }),
-    );
-
-    Dagre.layout(g);
-
-    return {
-        nodes: nodes.map((node) => {
-            const position = g.node(node.id);
-            // We are shifting the dagre node position (anchor=center center) to the top left
-            // so it matches the React Flow node anchor point (top left).
-            const x = position.x - (node.measured?.width ?? 0) / 2;
-            const y = position.y - (node.measured?.height ?? 0) / 2;
-
-            return { ...node, position: { x, y } };
-        }),
-        edges,
-    };
-};
+import LayoutPanel from "./components/layout-panel";
 
 // Create a proper selector that extracts nodes from the state
 const selector = (state: GraphAreaState) => ({
@@ -56,11 +22,9 @@ const selector = (state: GraphAreaState) => ({
     edges: state.edges,
     onNodesChange: state.onNodesChange,
     onEdgesChange: state.onEdgesChange,
-    onConnect: state.onConnect,
     setNodes: state.setNodes,
     setEdges: state.setEdges,
     attemptModuleDeletion: state.canBeDeleted,
-    mergeDataNodes: state.mergeDataNodes,
 });
 
 const nodeTypes: Record<RenderedNodeType, (props: RenderedNodeProps) => JSX.Element> = {
@@ -76,75 +40,38 @@ interface GraphAreaViewProps {
 export default function GraphAreaView({ children, dagName }: GraphAreaViewProps) {
 
     useInitGraphAreaState(dagName);
-
-    // The issue might be here - make sure nodeTypes keys match the node type in your store
-
     const g = useGraphAreaStore(useShallow(selector));
+    const theme = useConstellationTheme();
+    const isClient = useIsClient();
 
-    // Add client-side-only rendering to prevent hydration mismatch
-    const [isClient, setIsClient] = useState(false);
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
-
-    const onLayout = useCallback(
-        (direction: string) => {
-            const layouted = getLayoutedElements(g.nodes, g.edges, { direction });
-            g.setNodes([...layouted.nodes]);
-            g.setEdges([...layouted.edges]);
-        },
-        [g.nodes, g.edges],
-    );
-
-    const { theme } = useTheme()
-    const pickedTheme: "dark" | "light" = 
-        theme === "dark" || theme === "light" ? theme :
-        window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-
-    // Only render ReactFlow on the client to avoid hydration issues
-    if (!isClient) {
-        return <div className="border-gray-300 border-1 rounded-md" style={{ width: "99vw", height: "89vh" }}>
+    /* Only render ReactFlow on the client to avoid hydration issues. */
+    if (!isClient) return 
+        <div className="border-gray-300 border-1 rounded-md" style={{ width: "99vw", height: "89vh" }}>
             Loading graph...
         </div>;
-    }
 
     return (
-        <div id="graph-area" className="border-gray-300 border-1 rounded-md" style={{ width: "99vw", height: "89vh" }}>
+        <div id="graph-area" className="w-full h-full">
             <ReactFlow
                 nodes={g.nodes}
                 edges={g.edges}
                 onNodesChange={g.onNodesChange}
                 onEdgesChange={g.onEdgesChange}
-                onConnect={g.onConnect}
                 nodeTypes={nodeTypes} 
                 onBeforeDelete={g.attemptModuleDeletion}
                 attributionPosition="bottom-left"
-                colorMode={pickedTheme}
+                colorMode={theme}
                 fitView>
                 <Controls />
                 {children}
+                <LayoutPanel
+                    nodes={g.nodes}
+                    edges={g.edges}
+                    setNodes={g.setNodes}
+                    setEdges={g.setEdges} />
                 <MiniMap />
-                <Panel id="explorer-toggle-button"
-                    className={"vertical border-gray-300 border-1 rounded-sm w-60"}
-                    position={"top-left"}
-                    aria-label="Module Explorer toggle button">
-                    <ControlButton
-                        title="vertical layout"
-                        aria-label="vertical layout"
-                        onClick={() => onLayout("LR")}
-                        style={{ width: "40px", height: "40px" } as CSSProperties}>
-                        <MoveHorizontal style={{ fill: "none", maxWidth: "20px", maxHeight: "20px" } as CSSProperties} />
-                    </ControlButton>
-                    <ControlButton
-                        title="vertical layout"
-                        aria-label="vertical layout"
-                        onClick={() => onLayout("TB")}
-                        style={{ width: "40px", height: "40px" } as CSSProperties}>
-                        <MoveVertical style={{ fill: "none", maxWidth: "20px", maxHeight: "20px" } as CSSProperties} />
-                    </ControlButton>
-                </Panel>
                 <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
             </ReactFlow>
         </div >
-    );
-};
+    )
+}
