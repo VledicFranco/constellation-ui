@@ -11,7 +11,7 @@ export default function DefaultLayout({
 }) {
   return (
     <HeroUIProvider>
-      <NextThemesProvider attribute="class" defaultTheme="dark">
+      <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
         <div className="relative flex flex-col h-screen">
           <Head />
           <Navbar />

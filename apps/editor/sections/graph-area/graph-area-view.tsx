@@ -97,9 +97,9 @@ export default function GraphAreaView({ children, dagName }: GraphAreaViewProps)
     );
 
     const { theme } = useTheme()
-    useEffect(() => {
-        console.log(theme)
-    }, [theme]);
+    const pickedTheme: "dark" | "light" = 
+        theme === "dark" || theme === "light" ? theme :
+        window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 
     // Only render ReactFlow on the client to avoid hydration issues
     if (!isClient) {
@@ -119,7 +119,7 @@ export default function GraphAreaView({ children, dagName }: GraphAreaViewProps)
                 nodeTypes={nodeTypes} 
                 onBeforeDelete={g.attemptModuleDeletion}
                 attributionPosition="bottom-left"
-                colorMode={theme === "dark" ? "dark" : "light"}
+                colorMode={pickedTheme}
                 fitView>
                 <Controls />
                 {children}
