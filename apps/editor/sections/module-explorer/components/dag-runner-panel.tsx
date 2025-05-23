@@ -23,8 +23,9 @@ import 'react18-json-view/src/style.css'
 
 import { GraphAreaApi } from "../../graph-area";
 import { DataNodeSpec, EngineContext } from "@/apps/common/dag-dsl";
+import { useModuleExplorerState } from "../module-explorer-state";
 
-const renderNumberInput = (uuid: string, name: string) => (
+const renderNumberInput = (uuid: string, name: string, getDefaultValue: (uuid: string) => any) => (
     <NumberInput
         name={uuid}
         key={uuid}
@@ -34,20 +35,22 @@ const renderNumberInput = (uuid: string, name: string) => (
         formatOptions={{
             useGrouping: false,
         }}
+        defaultValue={getDefaultValue(uuid)}
         size="sm"
     />
 );
 
-const renderCheckbox = (uuid: string, name: string) => (
+const renderCheckbox = (uuid: string, name: string, getDefaultValue: (uuid: string) => any) => (
     <Checkbox
         name={uuid}
         key={uuid}
         id={uuid}
         size="sm"
+        defaultValue={getDefaultValue(uuid)}
     >{name}</Checkbox>
 );
 
-const renderDateInput = (uuid: string, name: string) => (
+const renderDateInput = (uuid: string, name: string, getDefaultValue: (uuid: string) => any) => (
     <DateInput
         name={uuid}
         key={uuid}
@@ -55,31 +58,42 @@ const renderDateInput = (uuid: string, name: string) => (
         size="sm"
         granularity="second"
         label={name}
+        defaultValue={getDefaultValue(uuid)}
     />
 );
 
-const renderDefaultInput = (uuid: string, name: string) => (
+const renderDefaultInput = (uuid: string, name: string, getDefaultValue: (uuid: string) => any) => (
     <Input
         key={uuid}
         name={uuid}
         id={uuid}
         size="sm"
         label={name}
+        defaultValue={getDefaultValue(uuid)}
     />
 );
-
-const renderSingletonNode = (uuid: string, dataNodeSpec: DataNodeSpec) => {
-    if (dataNodeSpec.cType.tag === "integer")
-        return renderNumberInput(uuid, dataNodeSpec.name)
-    else if (dataNodeSpec.cType.tag === "boolean")
-        return renderCheckbox(uuid, dataNodeSpec.name)
-    else 
-        return renderDefaultInput(uuid, dataNodeSpec.name)
-}
 
 export default function DagRunnerPanel() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submittedSuccessfully, setSubmittedSuccessfully] = useState<EngineContext | null>(null);
+    const { getRunnerPanelValue, setDagRunnerPanelValue, resetDagRunnerPanelValues } = useModuleExplorerState();
+
+    const handleInputChange = (uuid: string, value: string) => {
+        setDagRunnerPanelValue(uuid, value);
+    };
+
+    const renderSingletonNode = (uuid: string, dataNodeSpec: DataNodeSpec) => {
+        if (dataNodeSpec.cType.tag === "integer")
+            return renderNumberInput(uuid, dataNodeSpec.name, getRunnerPanelValue)
+        else if (dataNodeSpec.cType.tag === "boolean")
+            return renderCheckbox(uuid, dataNodeSpec.name, getRunnerPanelValue)
+        else 
+            return renderDefaultInput(uuid, dataNodeSpec.name, getRunnerPanelValue)
+    }
+
+    const handleReset = () => {
+        resetDagRunnerPanelValues();
+    };
 
     const onSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -91,6 +105,7 @@ export default function DagRunnerPanel() {
         const dataEntries = Object.fromEntries(entries)
         GraphAreaApi.runDagWithInputs(dataEntries)
             .then((context) => {
+                entries.forEach(([key, value]) => handleInputChange(key, value))
                 setIsSubmitting(false)
                 setSubmittedSuccessfully(context)
             })
@@ -122,7 +137,8 @@ export default function DagRunnerPanel() {
             <div className="flex flex-col gap-2">
                 <Form
                     className="w-full justify-center items-center space-y-4"
-                    onSubmit={onSubmit}>
+                    onSubmit={onSubmit}
+                    onReset={handleReset}>
                     <Card className="w-full">
                         <CardHeader className="flex gap-1">
                             DAG Inputs
