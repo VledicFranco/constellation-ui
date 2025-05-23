@@ -251,6 +251,14 @@
     border-color: #6fa3f7;
 }
 
+.dark .react-flow__node-data {
+    border-color: #9e86ed;
+}
+
 .react-flow__node-module {
     border-color: #65ba84;
+}
+
+.dark .react-flow__node-module {
+    border-color: #ff0073;
 }

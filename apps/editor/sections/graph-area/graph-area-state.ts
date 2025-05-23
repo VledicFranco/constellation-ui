@@ -219,9 +219,11 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             });
         },
         onConnect: (connection: Connection) => {
+            /*
             set({
                 edges: addEdge(connection, get().edges),
             });
+            */
         },
         setNodes: (nodes: RenderedNode[]) => {
             set({ nodes });
@@ -229,6 +231,7 @@ export const useGraphAreaStore = create<GraphAreaState>()(
         setEdges: (edges: Edge[]) => {
             set({ edges });
         },
+
         addModuleToDag: async (module: ModuleNodeSpec) => {
             const dag = get().dag;
             const uuid = v4();

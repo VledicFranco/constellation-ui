@@ -1,6 +1,8 @@
 import { Head } from "./head";
 
 import { Navbar } from "@/components/navbar";
+import {HeroUIProvider} from "@heroui/react";
+import {ThemeProvider as NextThemesProvider} from "next-themes";
 
 export default function DefaultLayout({
   children,
@@ -8,12 +10,16 @@ export default function DefaultLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex flex-col h-screen">
-      <Head />
-      <Navbar />
-      <main className="flex">
-        {children}
-      </main>
-    </div>
+    <HeroUIProvider>
+      <NextThemesProvider attribute="class" defaultTheme="dark">
+        <div className="relative flex flex-col h-screen">
+          <Head />
+          <Navbar />
+          <main className="flex">
+            {children}
+          </main>
+        </div>
+      </NextThemesProvider>
+    </HeroUIProvider>
   );
 }

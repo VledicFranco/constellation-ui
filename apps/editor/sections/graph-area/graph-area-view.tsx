@@ -1,29 +1,27 @@
 import Dagre from "@dagrejs/dagre";
-import { useEffect, useState, useCallback, CSSProperties } from "react";
 import {
-    ReactFlow,
-    MiniMap,
-    Controls,
     Background,
     BackgroundVariant,
-    Handle,
-    Position,
-    Panel,
     ControlButton,
-    NodeToolbar,
+    Controls,
     Edge,
+    MiniMap,
+    Panel,
+    ReactFlow
 } from "@xyflow/react";
-import { MoveHorizontal, MoveVertical, Info } from "lucide-react";
 import "@xyflow/react/dist/style.css";
+import { MoveHorizontal, MoveVertical } from "lucide-react";
+import { CSSProperties, useCallback, useEffect, useState } from "react";
 import "./graph-area-styles.css";
 
 import { useShallow } from "zustand/react/shallow";
-import { GraphAreaState, useGraphAreaStore, useInitGraphAreaState } from "./graph-area-state";
-import { Chip } from "@heroui/react";
-import { ModuleStatus, parseCValueToString } from "@/apps/common/dag-dsl"
+import DataNodeComponent from "./components/data-node-component";
+import ModuleNodeComponent from "./components/module-node-component";
 import { RenderedNode, RenderedNodeProps, RenderedNodeType } from "./graph-area-dsl";
+import { GraphAreaState, useGraphAreaStore, useInitGraphAreaState } from "./graph-area-state";
+import {useTheme} from "next-themes";
 
-const getLayoutedElements = (nodes: RenderedNode[], edges: Edge[], options: { direction: string }) => {
+function getLayoutedElements(nodes: RenderedNode[], edges: Edge[], options: { direction: string }): { nodes: RenderedNode[], edges: Edge[] } {
     const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
     g.setGraph({ rankdir: options.direction });
 
@@ -54,8 +52,8 @@ const getLayoutedElements = (nodes: RenderedNode[], edges: Edge[], options: { di
 
 // Create a proper selector that extracts nodes from the state
 const selector = (state: GraphAreaState) => ({
-    nodes: state.nodes || [],
-    edges: state.edges || [],
+    nodes: state.nodes,
+    edges: state.edges,
     onNodesChange: state.onNodesChange,
     onEdgesChange: state.onEdgesChange,
     onConnect: state.onConnect,
@@ -65,93 +63,9 @@ const selector = (state: GraphAreaState) => ({
     mergeDataNodes: state.mergeDataNodes,
 });
 
-interface GraphAreaViewProps {
-    children?: React.ReactNode
-}
-
-// Update node components to use NodeProps type for better type safety
-function DagDataNode({ data }: RenderedNodeProps) {
-    if (data.tag !== "data") throw new Error("Invalid node type")
-    
-    return (
-        <div>
-            <Handle type="target" position={Position.Top} isConnectable={true} />
-            <div className="grid grid-cols-1 gap-1">
-                <div className="node-header">{data.name}</div>
-                {data.value && (
-                    <div className="node-value">
-                        <Chip size="sm" color="primary" variant="flat">{parseCValueToString(data.value)}</Chip>
-                    </div>
-                )}
-            </div>
-            <Handle type="source" position={Position.Bottom} isConnectable={true} />
-        </div>
-    );
-}
-
-function DagModuleNode({ data }: RenderedNodeProps) {
-    if (data.tag !== "module") throw new Error("Invalid node type")
-
-    const moduleTagChipClass = (status: ModuleStatus) => {
-        switch (status.tag) {
-            case "fired":
-                return "success";
-            case "failed":
-                return "danger";
-            case "timed":
-                return "warning";
-            case "unfired":
-                return "warning";
-            default:
-                return "default";
-        }
-    }
-
-    const message = (status: ModuleStatus) => {
-        switch (status.tag) {
-            case "fired":
-                return "fired: " + status.latency + "ms";
-            case "failed":
-                return "error: " + status.error;
-            case "timed":
-                return "timed: " + status.latency + "ms";
-            case "unfired":
-                return "unfired";
-            default:
-                return "default";
-        }
-    }
-
-    return <>
-        <NodeToolbar
-            className="border-gray-300 border-1 rounded-sm shadow-md"
-            isVisible={false}
-            position={Position.Right}
-        >
-            <button onClick={() => {
-                // TODO: open module explorer
-            }}>
-                <Info style={{ fill: "none", maxWidth: "15px", maxHeight: "15px" } as CSSProperties} />
-            </button>
-        </NodeToolbar >
-        <div>
-            <Handle type="target" position={Position.Top} isConnectable={true} />
-            <div className="grid grid-cols-1 gap-1">
-                <div className="node-header">{data.name}</div>
-                {data.status && (
-                    <div className="node-value">
-                        <Chip size="sm" variant="flat" color={moduleTagChipClass(data.status)}>{message(data.status)}</Chip>
-                    </div>
-                )}
-            </div>
-            <Handle type="source" position={Position.Bottom} isConnectable={true} />
-        </div >
-    </>
-}
-
 const nodeTypes: Record<RenderedNodeType, (props: RenderedNodeProps) => JSX.Element> = {
-    "data": DagDataNode,
-    "module": DagModuleNode,
+    "data": DataNodeComponent,
+    "module": ModuleNodeComponent,
 }
 
 interface GraphAreaViewProps {
@@ -165,23 +79,27 @@ export default function GraphAreaView({ children, dagName }: GraphAreaViewProps)
 
     // The issue might be here - make sure nodeTypes keys match the node type in your store
 
-    const { nodes, edges, onNodesChange, onEdgesChange, onConnect, setNodes, setEdges, attemptModuleDeletion, mergeDataNodes } = useGraphAreaStore(useShallow(selector));
+    const g = useGraphAreaStore(useShallow(selector));
 
     // Add client-side-only rendering to prevent hydration mismatch
     const [isClient, setIsClient] = useState(false);
-
     useEffect(() => {
         setIsClient(true);
     }, []);
 
     const onLayout = useCallback(
         (direction: string) => {
-            const layouted = getLayoutedElements(nodes, edges, { direction });
-            setNodes([...layouted.nodes]);
-            setEdges([...layouted.edges]);
+            const layouted = getLayoutedElements(g.nodes, g.edges, { direction });
+            g.setNodes([...layouted.nodes]);
+            g.setEdges([...layouted.edges]);
         },
-        [nodes, edges],
+        [g.nodes, g.edges],
     );
+
+    const { theme } = useTheme()
+    useEffect(() => {
+        console.log(theme)
+    }, [theme]);
 
     // Only render ReactFlow on the client to avoid hydration issues
     if (!isClient) {
@@ -193,14 +111,15 @@ export default function GraphAreaView({ children, dagName }: GraphAreaViewProps)
     return (
         <div id="graph-area" className="border-gray-300 border-1 rounded-md" style={{ width: "99vw", height: "89vh" }}>
             <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
+                nodes={g.nodes}
+                edges={g.edges}
+                onNodesChange={g.onNodesChange}
+                onEdgesChange={g.onEdgesChange}
+                onConnect={g.onConnect}
                 nodeTypes={nodeTypes} 
-                onBeforeDelete={attemptModuleDeletion}
+                onBeforeDelete={g.attemptModuleDeletion}
                 attributionPosition="bottom-left"
+                colorMode={theme === "dark" ? "dark" : "light"}
                 fitView>
                 <Controls />
                 {children}

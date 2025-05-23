@@ -131,7 +131,6 @@ export default function DagRunnerPanel() {
             style={{
                 'right': '50px',
                 'width': '500px',
-                'backgroundColor': 'rgba(255, 255, 255, 0.8)',
                 'height': 'auto',
             } as CSSProperties}>
             <div className="flex flex-col gap-2">
