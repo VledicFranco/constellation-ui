@@ -1,34 +1,37 @@
 import * as R from 'remeda'
-import { DataType, Value } from "./types-dsl"
 
-export type DataNodeSpec
-    = {
-        tag: "data-node-spec-singleton"
-        name: string
-        dtype: DataType
-    }
-    | {
-        tag: "data-node-spec-product"
-        name: string
-        dtype: { [key: string]: DataType }
-    }
-    | {
-        tag: "data-node-spec-coproduct"
-        name: string
-        dtype: { [key: string]: DataType }
-    }
+export type CTypeString = { tag: "string" }
 
-// Or with type narrowing using a type guard
-export function isSingletonNode(node: DataNodeSpec): node is DataNodeSpec & { tag: "data-node-spec-singleton" } {
-    return node.tag === "data-node-spec-singleton";
-}
+export type CTypeInt = { tag: "integer" }
 
-export function isProductNode(node: DataNodeSpec): node is DataNodeSpec & { tag: "data-node-spec-product" } {
-    return node.tag === "data-node-spec-product";
-}
+export type CTypeFloat = { tag: "float" }
 
-export function isCoproductNode(node: DataNodeSpec): node is DataNodeSpec & { tag: "data-node-spec-coproduct" } {
-    return node.tag === "data-node-spec-coproduct";
+export type CTypeBoolean = { tag: "boolean" }
+
+export type CTypeList = { tag: "list", valuesType: CType }
+
+export type CTypeMap = { tag: "map", keysType: CType, valuesType: CType }
+
+export type CType = CTypeString | CTypeInt | CTypeFloat | CTypeBoolean | CTypeList | CTypeMap
+
+export type CValueString = { tag: "string", value: string }
+
+export type CValueInt = { tag: "integer", value: number }
+
+export type CValueFloat = { tag: "float", value: number }
+
+export type CValueBoolean = { tag: "boolean", value: boolean }
+
+export type CValueList = { tag: "list", value: CValue[], valuesType: CType }
+
+export type CValueMap = { tag: "map", value: [CValue, CValue][], keysType: CType, valuesType: CType }
+
+export type CValue = CValueString | CValueInt | CValueFloat | CValueBoolean | CValueList | CValueMap
+
+export type DataNodeSpec = {
+    name: string
+    nicknames: Record<string, string>
+    cType: CType
 }
 
 export type ModuleMetadata = {
@@ -44,15 +47,13 @@ export const emptyModuleMetadata: ModuleMetadata = {
 }
 
 export type ModuleNodeSpec = {
-    //tag: "module-node-spec"
     name: string
-    produces: DataNodeSpec[]
-    consumes: DataNodeSpec[]
     metadata: ModuleMetadata
+    produces: Record<string, CType>
+    consumes: Record<string, CType>
 }
 
 export type DagSpec = {
-    //tag: "dag-spec"
     name: string
     modules: { [uuid: string]: ModuleNodeSpec }
     data: { [uuid: string]: DataNodeSpec }
@@ -68,25 +69,21 @@ export const emptyDag: DagSpec = {
     outEdges: []
 }
 
-export type DataNode = {
-    tag: "data-node-singleton"
-    spec: DataNodeSpec
-    data: Value
-}
-
 export type ModuleStatus
     = { tag: "unfired" }
     | { tag: "fired", latency: number }
+    | { tag: "timed", latency: number }
     | { tag: "failed", error: string }
 
 export type EngineContext = {
     processUuid: string
     dag: DagSpec
     moduleStatus: { [uuid: string]: ModuleStatus }
-    loadedData: { [uuid: string]: DataNode }
+    loadedData: { [uuid: string]: CValue }
+    latency: number
 }
 
 export function getDagInputs(dag: DagSpec) {
-    const inIds = R.difference(Object.keys(dag.data), R.keys(dag.inEdges));
+    const inIds = R.difference(Object.keys(dag.data), R.keys(dag.inEdges))
     return Object.entries(dag.data).filter(([id, spec]) => inIds.includes(id))
 }

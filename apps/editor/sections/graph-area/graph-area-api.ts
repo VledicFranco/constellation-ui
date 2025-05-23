@@ -1,17 +1,22 @@
-import { DataNode, DataNodeSpec, ModuleNodeSpec } from "@/apps/common/dag-dsl";
+import { CType, CValue, ModuleNodeSpec } from "@/apps/common/dag-dsl";
 import { useGraphAreaStore } from "./graph-area-state";
 import EditorBackendApi from "../../editor-backend-api";
-import { buildValue } from "@/apps/common/types-dsl";
 
-const specToValue = (spec: DataNodeSpec, value: string): DataNode => {
-    if (spec.tag === "data-node-spec-singleton") {
-        return {
-            tag: "data-node-singleton",
-            spec: spec,
-            data: buildValue(value, spec.dtype)
-        }
-    } else 
-        throw new Error(`Unsupported data node spec: ${spec.tag}`);
+const specToValue = (cType: CType, value: string): CValue => {
+    if (cType.tag === "string")
+        return { tag: "string", value }
+    else if (cType.tag === "integer")
+        return { tag: "integer", value: parseInt(value) }
+    else if (cType.tag === "float")
+        return { tag: "float", value: parseFloat(value) }
+    else if (cType.tag === "boolean")
+        return { tag: "boolean", value: value === "true" }
+    else if (cType.tag === "list") {
+        const values = value.split(",").map(v => v.trim())
+        return { tag: "list", value: values.map(v => specToValue(cType.valuesType, v)), valuesType: cType.valuesType }
+    }
+    else 
+        throw new Error(`Unsupported CType: ${cType.tag}`)
 }
 
 const GraphAreaApi = {
@@ -25,10 +30,10 @@ const GraphAreaApi = {
     runDagWithInputs: async (inputs: Record<string, string>) => {
         const state = useGraphAreaStore.getState()
         const specs = state.getDagInputs()
-        const dataNodes = Object.entries(specs).map(([uuid, spec]) => {
+        const dataNodes = Object.entries(specs).reduce((acc, [uuid, spec]) => {
             const input = inputs[uuid]
-            return specToValue(spec, input)
-        })
+            return { ...acc, [spec.name]: specToValue(spec.cType, input) }
+        }, {} as Record<string, CValue>)
         const result = await EditorBackendApi.runDag(state.dag.name, dataNodes)
         state.renderEngineContext(result)
         return result

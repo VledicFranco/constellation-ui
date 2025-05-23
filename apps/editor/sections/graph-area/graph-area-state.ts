@@ -6,8 +6,6 @@ import { addEdge, applyNodeChanges, applyEdgeChanges } from '@xyflow/react';
 import EditorBackendApi from "../../editor-backend-api";
 import { useEffect } from "react";
 import { v4 } from "uuid";
-import { StubDag } from "@/apps/common/stubs";
-import { isBoolean, isNumber, isTimestamp } from "@/apps/common/types-dsl";
 
 export type GraphAreaState = {
     dag: DagSpec;
@@ -143,7 +141,8 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                         console.log("intersecting node", intersectingNode)
                         const dagLandingNode = state.dag.data[intersectingNode.id];
                         const dagDraggingNode = state.dag.data[node.id];
-                        if (dagLandingNode.name != dagDraggingNode.name) return [scNode(change)]
+                        if (!R.isDeepEqual(dagLandingNode.cType, dagDraggingNode.cType)) return [scNode(change)]
+                        console.log("kek")
                         const removeChange: NodeRemoveChange = {
                             id: node.id,
                             type: 'remove'
@@ -189,9 +188,17 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                         const removedDagOutEdges: [string, string][] = state.dag.outEdges.filter(([source, target]) => target !== node.id);
                         const addedDagInEdges: [string, string][] = out.map(x => [intersectingNode.id, x.id])
                         const addedDagOutEdges: [string, string][] = inc.map(x => [x.id, intersectingNode.id])
+
+                        const newDataNode: DataNodeSpec = {
+                            ...dagLandingNode,
+                            nicknames: { ...dagLandingNode.nicknames, ...dagDraggingNode.nicknames },
+                        }
+
+                        console.log("newDataNode", newDataNode)
+
                         const newDag: DagSpec = {
                             ...state.dag,
-                            data: R.omit(state.dag.data, [node.id]),
+                            data: { ...R.omit(state.dag.data, [node.id]), [intersectingNode.id]: newDataNode },
                             inEdges: [...removedDagInEdges, ...addedDagInEdges],
                             outEdges: [...removedDagOutEdges, ...addedDagOutEdges],
                         }
@@ -233,8 +240,12 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             const dag = get().dag;
             const uuid = v4();
             console.log(module)
-            const newDataIn = module.consumes.reduce((acc, node) => ({ ...acc, [v4()]: node }), {} as { [uuid: string]: DataNodeSpec });
-            const newDataOut = module.produces.reduce((acc, node) => ({ ...acc, [v4()]: node }), {} as { [uuid: string]: DataNodeSpec });
+            const newDataIn = Object.keys(module.consumes).reduce((acc, name) => 
+                ({ ...acc, [v4()]: { name, nicknames: { [uuid]: name }, cType: module.consumes[name] } })
+            , {} as { [uuid: string]: DataNodeSpec })
+            const newDataOut = Object.keys(module.produces).reduce((acc, name) =>
+                ({ ...acc, [v4()]: { name, nicknames: { [uuid]: name }, cType: module.produces[name] } })
+            , {} as { [uuid: string]: DataNodeSpec })
             const newEdgesIn = Object.keys(newDataIn).reduce((acc, id) => acc.concat([[id, uuid]]), [] as [string, string][]);
             const newEdgesOut = Object.keys(newDataOut).reduce((acc, id) => acc.concat([[uuid, id]]), [] as [string, string][]);
             const newDag = {
@@ -371,20 +382,12 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                 const contextData = context.loadedData[node.id];
 
                 if (contextData) {
-                    const contextDataValue = contextData.data;
                     var val = null;
-                    if (contextDataValue.dataType.raw === 'ListValue') {
-                        const xs = (contextDataValue.listValue || []).map((x) => x.stringValue)
+                    if (contextData.tag === "list") {
+                        const xs = contextData.value.map((x) => x.value.toString())
                         val = xs.join(", ")
-                    } else if (isNumber(contextDataValue.dataType.raw)) {
-                        val = contextDataValue.longValue || contextDataValue.doubleValue;
-                    } else if (isBoolean(contextDataValue.dataType.raw)) {
-                        val = contextDataValue.boolValue;
-                    } else if (isTimestamp(contextDataValue.dataType.raw)) {
-                        val = contextDataValue.timestampValue;
-                    } else {
-                        val = contextDataValue.stringValue;
-                    }
+                    } else 
+                        val = contextData.value.toString()
                     node.data = { ...node.data, value: val };
                     return node;
                 } else {

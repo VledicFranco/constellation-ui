@@ -1,6 +1,6 @@
 import { ExplorersModule } from "./sections/module-explorer/module-explorer-dsl"
 import { backendRequestBuilder } from "../common/backend-api-common"
-import { DagSpec, DataNode, EngineContext } from "../common/dag-dsl"
+import { DagSpec, CValue, EngineContext } from "../common/dag-dsl"
 
 const request = backendRequestBuilder("editor")
 
@@ -18,8 +18,8 @@ const EditorBackendApi = {
         return (await request("post", `/dag/${name}`, dag)).data.data
     },
 
-    async runDag(name: string, inputs: DataNode[]): Promise<EngineContext> {
-        return (await request("post", `/dag/${name}/run`, { nodes: inputs })).data.data
+    async runDag(name: string, inputs: Record<string, CValue>): Promise<EngineContext> {
+        return (await request("post", `/dag/${name}/run`, inputs)).data.data
     },
 }
 

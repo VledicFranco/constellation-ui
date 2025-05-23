@@ -16,14 +16,13 @@ import {
     ScrollShadow
 } from "@heroui/react";
 import { Panel } from "@xyflow/react";
-import { CSSProperties, useState } from "react";
+import { CSSProperties, FormEvent, useState } from "react";
 
 import JsonView from 'react18-json-view'
 import 'react18-json-view/src/style.css'
 
 import { GraphAreaApi } from "../../graph-area";
-import { isBoolean, isNumber, isTimestamp } from "@/apps/common/types-dsl";
-import { isSingletonNode } from "@/apps/common/dag-dsl";
+import { DataNodeSpec, EngineContext } from "@/apps/common/dag-dsl";
 
 const renderNumberInput = (uuid: string, name: string) => (
     <NumberInput
@@ -69,23 +68,20 @@ const renderDefaultInput = (uuid: string, name: string) => (
     />
 );
 
-const renderSingletonNode = (uuid: string, dataNodeSpec: any) => {
-    if (isNumber(dataNodeSpec.dtype.raw)) {
-        return renderNumberInput(uuid, dataNodeSpec.name);
-    } else if (isBoolean(dataNodeSpec.dtype.raw)) {
-        return renderCheckbox(uuid, dataNodeSpec.name);
-    } else if (isTimestamp(dataNodeSpec.dtype.raw)) {
-        return renderDateInput(uuid, dataNodeSpec.name);
-    } else {
-        return renderDefaultInput(uuid, dataNodeSpec.name);
-    }
+const renderSingletonNode = (uuid: string, dataNodeSpec: DataNodeSpec) => {
+    if (dataNodeSpec.cType.tag === "integer")
+        return renderNumberInput(uuid, dataNodeSpec.name)
+    else if (dataNodeSpec.cType.tag === "boolean")
+        return renderCheckbox(uuid, dataNodeSpec.name)
+    else 
+        return renderDefaultInput(uuid, dataNodeSpec.name)
 }
 
 export default function DagRunnerPanel() {
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submittedSuccessfully, setSubmittedSuccessfully] = useState(null);
+    const [submittedSuccessfully, setSubmittedSuccessfully] = useState<EngineContext | null>(null);
 
-    const onSubmit = (e) => {
+    const onSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsSubmitting(true);
         const data: { [entry: string]: FormDataEntryValue } = Object.fromEntries(new FormData(e.currentTarget));
@@ -95,8 +91,8 @@ export default function DagRunnerPanel() {
         const dataEntries = Object.fromEntries(entries)
         GraphAreaApi.runDagWithInputs(dataEntries)
             .then((context) => {
-                setIsSubmitting(false);
-                setSubmittedSuccessfully(context);
+                setIsSubmitting(false)
+                setSubmittedSuccessfully(context)
             })
             .catch((error) => {
                 console.error("Error running DAG:", error);
@@ -135,12 +131,9 @@ export default function DagRunnerPanel() {
                         <CardBody>
                             <div className="grid grid-cols-1 gap-4">
                                 <div className="flex flex-col gap-4 w-full">
-                                    {dataInputs.map(([uuid, dataNodeSpec]) => {
-                                        if (isSingletonNode(dataNodeSpec)) {
-                                            return renderSingletonNode(uuid, dataNodeSpec);
-                                        }
-                                        return null;
-                                    })}
+                                    {dataInputs.map(([uuid, dataNodeSpec]) =>
+                                        renderSingletonNode(uuid, dataNodeSpec)
+                                    )}
                                 </div>
                                 {submittedSuccessfully && (
                                     <div className="flex flex-col w-full">
