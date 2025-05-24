@@ -4,6 +4,7 @@ import { CValue, DagSpec, DataNodeSpec, ModuleNodeSpec, ModuleStatus } from "@/a
 import { applyEdgeChanges, applyNodeChanges, Edge, EdgeChange, getIncomers, getOutgoers, MarkerType, Node, NodeChange, NodeProps, Position } from "@xyflow/react"
 import { GraphAreaState } from "./graph-area-state"
 import EditorBackendApi from "../../editor-backend-api"
+import { v4 } from "uuid"
 
 export type RenderedNode = Node<DataNodePayload | ModuleNodePayload, RenderedNodeType>
 
@@ -79,6 +80,85 @@ export class GraphAreaStateApi {
         this.graph.edges = edges
     }
 
+    setPreferredLayout(layout: LayoutDirection): void {
+        this.preferredLayout = layout
+    }
+
+    async addModule(module: ModuleNodeSpec): Promise<GraphRender> {
+        const uuid = v4()
+        const newDataIn = Object.keys(module.consumes).reduce((acc, name) => 
+            ({ ...acc, [v4()]: { name, nicknames: { [uuid]: name }, cType: module.consumes[name] } })
+        , {} as { [uuid: string]: DataNodeSpec })
+        const newDataOut = Object.keys(module.produces).reduce((acc, name) =>
+            ({ ...acc, [v4()]: { name, nicknames: { [uuid]: name }, cType: module.produces[name] } })
+        , {} as { [uuid: string]: DataNodeSpec })
+        const newEdgesIn = Object.keys(newDataIn).reduce((acc, id) => acc.concat([[id, uuid]]), [] as [string, string][])
+        const newEdgesOut = Object.keys(newDataOut).reduce((acc, id) => acc.concat([[uuid, id]]), [] as [string, string][])
+        const newDag = {
+            ...this.dag,
+            modules: { ...this.dag.modules, [uuid]: module },
+            data: { ...this.dag.data, ...newDataIn, ...newDataOut },
+            inEdges: this.dag.inEdges.concat(newEdgesIn),
+            outEdges: this.dag.outEdges.concat(newEdgesOut),
+        }
+        this.dag = newDag
+        await EditorBackendApi.saveDag(newDag)
+        return this.renderDag()
+    }
+
+    async deleteModule(modules: RenderedNode[], edges: Edge[]): Promise<GraphRender> {
+
+        const moduleIds = modules.map((module) => module.id) as string[]
+        const moduleInputs = edges.filter(edge => edge.target === modules[0].id)
+        const moduleInputsSources = moduleInputs.map(edge => edge.source)
+
+        const inputDatasToRemove = moduleInputsSources.filter((source) => {
+            const isProduceByOtherModule = this.dag.outEdges.some(([_, target]) => {
+                return target === source
+            })
+            if (isProduceByOtherModule)
+                return false
+            else {
+                const sourceHasOtherConsumers = this.dag.inEdges.some(([s, t]) => {
+                    return s === source && !R.isIncludedIn(t, moduleIds)
+                })
+                return !sourceHasOtherConsumers
+            }
+        })
+
+        const moduleOutputs = edges.filter(edge => edge.source === modules[0].id)
+        const moduleOutputsTargets = moduleOutputs.map(edge => edge.target)
+
+        const outputDatasToRemove = moduleOutputsTargets.filter((target) => {
+            const isConsumeByOtherModule = this.dag.inEdges.some(([source, _]) => {
+                return source === target
+            })
+            if (isConsumeByOtherModule)
+                return false
+            else {
+                const targetHasOtherProducers = this.dag.outEdges.some(([s, t]) => {
+                    return t === target && !R.isIncludedIn(s, moduleIds)
+                })
+                return !targetHasOtherProducers
+            }
+        })
+
+        const newDagInEdges = this.dag.inEdges.filter(([source, target]) => {
+            return !R.isIncludedIn(source, moduleIds) && !R.isIncludedIn(target, moduleIds)
+        })
+        const newDagOutEdges = this.dag.outEdges.filter(([source, target]) => {
+            return !R.isIncludedIn(source, moduleIds) && !R.isIncludedIn(target, moduleIds)
+        })
+
+        const newModules = R.omit(this.dag.modules, moduleIds)
+        const newDatas = R.omit(this.dag.data, R.concat(inputDatasToRemove, outputDatasToRemove))
+        const newDag = R.merge(this.dag, { modules: newModules, data: newDatas, inEdges: newDagInEdges, outEdges: newDagOutEdges })
+
+        this.dag = newDag
+        await EditorBackendApi.saveDag(newDag)
+        return this.renderDag() 
+    }
+
     findNode(id: string): RenderedNode {
         const node = this.graph.nodes.find((n) => n.id === id)
         if (!node) throw new Error(`Node with id ${id} not found, this is a bug and should never happen.`)
@@ -105,11 +185,11 @@ export class GraphAreaStateApi {
     layoutGraphAfterRender(changes: NodeChange<RenderedNode>[]): Graph & { lastAction?: RenderAction } {
         const changedNodes = applyNodeChanges(changes, this.graph.nodes)
         this.graph.nodes = changedNodes
-        const layout = this.layoutNodes()
+        const layout = this.layoutGraph()
         return { ...layout, lastAction: undefined }
     }
     
-    layoutNodes(): Graph {
+    layoutGraph(): Graph {
         const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}))
         g.setGraph({ rankdir: this.preferredLayout })
 
@@ -194,7 +274,7 @@ export class GraphAreaStateApi {
         this.graph.edges = applyEdgeChanges(edgeChanges, this.graph.edges)
         if (dagChanged) {
             this.dag = dagChanged
-            const graph = this.layoutNodes()
+            const graph = this.layoutGraph()
             await EditorBackendApi.saveDag(dagChanged)
             return {
                 dag: this.dag,
