@@ -6,18 +6,10 @@ import { addEdge, applyNodeChanges, applyEdgeChanges } from "@xyflow/react"
 import EditorBackendApi from "../../editor-backend-api"
 import { useEffect } from "react"
 import { v4 } from "uuid"
-import { LayoutDirection, RenderedNode } from "./graph-area-dsl"
+import { Graph, GraphAreaStateApi, GraphRender, LayoutDirection, RenderAction, RenderedNode } from "./graph-area-dsl"
 import Dagre from "@dagrejs/dagre"
 
-type RenderAction 
-    = "set-layout" 
-    | "graph-render"
-
-type Graph = { nodes: RenderedNode[], edges: Edge[] }
-
-type GraphRender = Graph & { dag: DagSpec, lastAction: RenderAction }
-
-function renderDag(dag: DagSpec, state: Graph & { preferredLayout: LayoutDirection } ): GraphRender {
+export function renderDag(dag: DagSpec, state: Graph & { preferredLayout: LayoutDirection } ): GraphRender {
 
     const dagToNodes = () => {
         const newNodes: RenderedNode[] = []
@@ -110,23 +102,8 @@ export function layoutNodes(nodes: RenderedNode[], edges: Edge[], options: { dir
         }),
         edges,
     };
-};
+}; 
 
-
-type StateChangeNode = { type: "state-change", change: NodeChange<RenderedNode> }
-type StateChangeEdge = { type: "state-change-edge", change: EdgeChange }
-type StateChangeDag = { type: "state-change-dag", change: DagSpec }
-type StateChange = StateChangeNode | StateChangeEdge | StateChangeDag
-
-function StateChangeNode(change: NodeChange<RenderedNode>): StateChange {
-    return ({ type: "state-change", change })
-}
-function StateChangeEdge(change: EdgeChange): StateChange {
-    return ({ type: "state-change-edge", change })
-}
-function StateChangeDag(change: DagSpec): StateChange {
-    return ({ type: "state-change-dag", change })
-}
 
 export type GraphAreaState = {
     dag: DagSpec
@@ -134,7 +111,7 @@ export type GraphAreaState = {
     edges: Edge[]
     preferredLayout: LayoutDirection 
     lastAction?: RenderAction
-    // Add a method to transform DAG to React Flow nodes
+
     loadDag: (name: string) => Promise<void>
 
     onNodesChange: (changes: NodeChange<RenderedNode>[]) => Promise<void>
@@ -162,115 +139,13 @@ export const useGraphAreaStore = create<GraphAreaState>()(
         },
 
         onNodesChange: async (changes: NodeChange<RenderedNode>[]) => {
-            
-            if (get().lastAction === "graph-render") {
-                const changedNodes = applyNodeChanges(changes, get().nodes)
-                const layout = layoutNodes(changedNodes, get().edges, { direction: get().preferredLayout })
-                return set({ ...layout, lastAction: undefined })
-            }
-
             const state = get()
-            const newChanges: StateChange[] = changes.flatMap((change) => {
-                if (change.type === "position" && !change.dragging) {
-                    const node = state.nodes.filter((node) => node.id === change.id)[0]
-                    if (node.type !== "data") return [StateChangeNode(change)]
-                    const intersectingNode = state.nodes.filter((n) => {
-                        if (n.id === node.id) return false
-                        const dx = Math.abs(node.position.x - n.position.x)
-                        const dy = Math.abs(node.position.y - n.position.y)
-                        const distance = Math.sqrt(dx * dx + dy * dy)
-                        return distance < 50
-                    })[0]
-                    if (intersectingNode && intersectingNode.type === "data") {
-                        console.log("intersecting node", intersectingNode)
-                        const dagLandingNode = state.dag.data[intersectingNode.id]
-                        const dagDraggingNode = state.dag.data[node.id]
-                        if (!R.isDeepEqual(dagLandingNode.cType, dagDraggingNode.cType)) return [StateChangeNode(change)]
-                        console.log("kek")
-                        const removeChange: NodeRemoveChange = {
-                            id: node.id,
-                            type: "remove"
-                        }
-                        const inc = getIncomers(node, state.nodes, state.edges)
-                        const incomers: EdgeChange[] = inc.map((n) => {
-                            return {
-                                type: "add",
-                                item: {
-                                    id: v4(),
-                                    source: n.id,
-                                    target: intersectingNode.id,
-                                    animated: true,
-                                    style: { stroke: "#f6ab00" },
-                                    type: "smoothstep",
-                                    markerEnd: {
-                                        type: MarkerType.ArrowClosed,
-                                        color: "#f6ab00",
-                                    },
-                                }
-                            }
-                        })
-                        const out = getOutgoers(node, state.nodes, state.edges)
-                        const outgoers: EdgeChange[] = out.map((n) => {
-                            return {
-                                type: "add",
-                                item: {
-                                    id: v4(),
-                                    source: intersectingNode.id,
-                                    target: n.id,
-                                    animated: true,
-                                    style: { stroke: "#f6ab00" },
-                                    type: "smoothstep",
-                                    markerEnd: {
-                                        type: MarkerType.ArrowClosed,
-                                        color: "#f6ab00",
-                                    },
-                                }
-                            }
-                        })
-                        const addEdges: StateChange[] = incomers.concat(outgoers).map(x => StateChangeEdge(x))
-                        const removedDagInEdges: [string, string][] = state.dag.inEdges.filter(([source, target]) => source !== node.id)
-                        const removedDagOutEdges: [string, string][] = state.dag.outEdges.filter(([source, target]) => target !== node.id)
-                        const addedDagInEdges: [string, string][] = out.map(x => [intersectingNode.id, x.id])
-                        const addedDagOutEdges: [string, string][] = inc.map(x => [x.id, intersectingNode.id])
+            const api = new GraphAreaStateApi(state)
 
-                        const newDataNode: DataNodeSpec = {
-                            ...dagLandingNode,
-                            nicknames: { ...dagLandingNode.nicknames, ...dagDraggingNode.nicknames },
-                        }
+            if (state.lastAction === "graph-render")
+                return set(api.layoutGraphAfterRender(changes))
 
-                        console.log("newDataNode", newDataNode)
-
-                        const newDag: DagSpec = {
-                            ...state.dag,
-                            data: { ...R.omit(state.dag.data, [node.id]), [intersectingNode.id]: newDataNode },
-                            inEdges: [...removedDagInEdges, ...addedDagInEdges],
-                            outEdges: [...removedDagOutEdges, ...addedDagOutEdges],
-                        }
-                        return [StateChangeNode(removeChange), ...addEdges, StateChangeDag(newDag)]
-                    } else
-                        return [StateChangeNode(change)]
-                } else
-                    return [StateChangeNode(change)]
-            })
-
-            const nodeChanges: NodeChange<RenderedNode>[] = newChanges.filter(x => x.type == "state-change").map(x => x.change)
-            const edgeChanges: EdgeChange[] = newChanges.filter(x => x.type == "state-change-edge").map(x => x.change)
-            const dagChanges = newChanges.filter(x => x.type == "state-change-dag").map(x => x.change)[0]
-
-            if (dagChanges) {
-                const layout = layoutNodes(
-                    applyNodeChanges(nodeChanges, state.nodes), 
-                    applyEdgeChanges(edgeChanges, state.edges), 
-                    { direction: get().preferredLayout }
-                )
-                set({
-                    dag: dagChanges,
-                    ...layout,
-                })
-                await EditorBackendApi.saveDag(dagChanges)
-            } else {
-                set({  nodes: applyNodeChanges(changes, state.nodes) })
-            }
+            set(await api.applyNodeChanges(changes))
         },
 
         onEdgesChange: (changes: EdgeChange[]) => {
