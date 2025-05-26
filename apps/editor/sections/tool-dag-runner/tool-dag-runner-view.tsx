@@ -22,57 +22,6 @@ import { CValue, cValueInt, cValueString, DataNodeSpec } from "@/apps/common/dag
 import { GraphAreaApi } from "../graph-area";
 import { ToolDagRunnerState, useToolDagRunnerState } from "./tool-dag-runner-state";
 
-/*
-const renderNumberInput = (uuid: string, name: string, getDefaultValue: (uuid: string) => any) => (
-    <NumberInput
-        name={uuid}
-        key={uuid}
-        id={uuid}
-        label={name}
-        hideStepper
-        formatOptions={{
-            useGrouping: false,
-        }}
-        defaultValue={getDefaultValue(uuid)}
-        size="sm"
-    />
-);
-
-const renderCheckbox = (uuid: string, name: string, getDefaultValue: (uuid: string) => any) => (
-    <Checkbox
-        name={uuid}
-        key={uuid}
-        id={uuid}
-        size="sm"
-        defaultValue={getDefaultValue(uuid)}
-    >{name}</Checkbox>
-);
-
-const renderDateInput = (uuid: string, name: string, getDefaultValue: (uuid: string) => any) => (
-    <DateInput
-        name={uuid}
-        key={uuid}
-        id={uuid}
-        size="sm"
-        granularity="second"
-        label={name}
-        defaultValue={getDefaultValue(uuid)}
-    />
-);
-
-const renderDefaultInput = (uuid: string, name: string, getDefaultValue: (uuid: string) => any) => (
-    <Input
-        key={uuid}
-        name={uuid}
-        id={uuid}
-        size="sm"
-        label={name}
-        defaultValue={getDefaultValue(uuid)}
-    />
-);
-*/
-
-
 interface CInputProps {
     uuid: string
     spec: DataNodeSpec
@@ -112,7 +61,7 @@ function CStringInput({ uuid, name, value, onValueChange }: InputProps) {
         key={uuid}
         name={uuid}
         size="sm"
-        label={`${name} input`}
+        label={name}
         defaultValue={value?.value}
         onValueChange={(value) => onValueChange(uuid, cValueString(value))}
     />
@@ -131,7 +80,7 @@ function CNumberInput({ uuid, name, value, onValueChange }: InputProps) {
             useGrouping: false,
         }}
         defaultValue={value.value}
-        onValueChange={(value) => onValueChange(uuid, cValueInt(value)) }
+        onValueChange={(value) => onValueChange(uuid, cValueInt(value))}
     />
 }
 
@@ -170,14 +119,14 @@ export default function ToolDagRunnerView() {
                     <CardBody>
                         <div className="grid grid-cols-1 gap-4">
                             <div className="flex flex-col gap-4 w-full">
-                                {state.specs.map(([uuid, dataNodeSpec]) =>
-                                    <CInput
+                                {state.specs.map(([uuid, dataNodeSpec]) => {
+                                    return <CInput
                                         key={uuid}
                                         uuid={uuid}
                                         spec={dataNodeSpec}
                                         state={state}
                                     />
-                                )}
+                            })}
                             </div>
                             {state.engineContext && (
                                 <div className="flex flex-col w-full">

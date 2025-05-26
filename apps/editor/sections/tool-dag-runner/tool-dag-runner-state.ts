@@ -28,11 +28,11 @@ export const useToolDagRunnerState = create<ToolDagRunnerState>()((set, get) => 
     getValue: (uuid) => 
         get().values[uuid],
 
-    setValue: (uuid: string, value: any) =>
+    setValue: (uuid: string, value: CValue) =>
         set((state) => ({
             values: {
                 ...state.values,
-                [uuid]: value
+                [uuid]: [state.values[uuid]?.[0] ?? "impossible", value]
             }
         })),
 
@@ -47,10 +47,9 @@ export const useToolDagRunnerState = create<ToolDagRunnerState>()((set, get) => 
 
     setInputSpecs: (dag: DagSpec) => {
         const specs = getDagInputs(dag)
-        const values = specs.reduce((acc, [uuid, spec]) => {
-            if (acc[uuid]) return acc
-            return { ...acc, [uuid]: [spec.name, cTypeDefaultValue(spec.cType)] }
-        }, get().values)
+        const values = specs.reduce((acc, [uuid, spec]) => 
+            ({ ...acc, [uuid]: [spec.name, cTypeDefaultValue(spec.cType)] })
+        , {} as Record<string, [string, CValue]>)
         set({ specs, values })
     },
 

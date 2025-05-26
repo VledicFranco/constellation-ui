@@ -169,8 +169,9 @@ export function parseCValueToString(cValue: CValue): string {
     else if (cValue.tag === "list") {
         return cValue.value.map(v => parseCValueToString(v)).join(", ")
     }
-    else 
-        throw new Error(`Unsupported CValue: ${cValue.tag}`)
+    else {
+        return cValue.value.map(([key, value]) => `${parseCValueToString(key)}: ${parseCValueToString(value)}`).join(", ")
+    }
 }
 
 export function emptyModuleMetadata(): ModuleMetadata {
