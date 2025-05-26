@@ -1,12 +1,11 @@
-import { ExplorersModule } from "./sections/module-explorer/module-explorer-dsl"
 import { backendRequestBuilder } from "../common/backend-api-common"
-import { DagSpec, CValue, EngineContext } from "../common/dag-dsl"
+import { DagSpec, CValue, EngineContext, ModuleNodeSpec } from "../common/dag-dsl"
 
 const request = backendRequestBuilder("editor")
 
 const EditorBackendApi = {
 
-    async getBarModules(): Promise<ExplorersModule[]> {
+    async getBarModules(): Promise<ModuleNodeSpec[]> {
         return (await request("get", "/modules")).data.data
     },
 
@@ -19,6 +18,7 @@ const EditorBackendApi = {
     },
 
     async runDag(name: string, inputs: Record<string, CValue>): Promise<EngineContext> {
+        console.log("Running DAG with inputs:", inputs)
         return (await request("post", `/dag/${name}/run`, inputs)).data.data
     },
 }

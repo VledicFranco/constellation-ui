@@ -28,6 +28,57 @@ export type CValueMap = { tag: "map", value: [CValue, CValue][], keysType: CType
 
 export type CValue = CValueString | CValueInt | CValueFloat | CValueBoolean | CValueList | CValueMap
 
+export const cTypeString: CTypeString = { tag: "string" }
+export const cTypeInt: CTypeInt = { tag: "integer" }
+export const cTypeFloat: CTypeFloat = { tag: "float" }
+export const cTypeBoolean: CTypeBoolean = { tag: "boolean" }
+export const cTypeList = (valuesType: CType): CTypeList =>
+    ({ tag: "list", valuesType })
+export const cTypeMap = (keysType: CType, valuesType: CType): CTypeMap =>
+    ({ tag: "map", keysType, valuesType })
+
+export function cTypeOf(value: CValue): CType {
+    switch (value.tag) {
+        case "string":
+            return cTypeString
+        case "integer":
+            return cTypeInt
+        case "float":
+            return cTypeFloat
+        case "boolean":
+            return cTypeBoolean
+        case "list":
+            return cTypeList(value.valuesType)
+        case "map":
+            return cTypeMap(value.keysType, value.valuesType)
+    }
+}
+
+export const cValueString = (value: string): CValueString => 
+    ({ tag: "string", value })
+export const cValueInt = (value: number): CValueInt => 
+    ({ tag: "integer", value })
+export const cValueFloat = (value: number): CValueFloat =>
+    ({ tag: "float", value })
+export const cValueBoolean = (value: boolean): CValueBoolean =>
+    ({ tag: "boolean", value })
+export const cValueList = (value: CValue[]): CValueList => {
+    const head = value[0]
+    if (head) return ({ tag: "list", value, valuesType: cTypeOf(head) })
+    else throw new Error("CList cannot be empty.")
+}
+export const cValueListOf = (value: CValue[], cType: CType): CValueList => {
+    return ({ tag: "list", value, valuesType: cType })
+}
+export const cValueMap = (value: [CValue, CValue][]): CValueMap => {
+    const head = value[0]
+    if (head) return ({ tag: "map", value, keysType: cTypeOf(head[0]), valuesType: cTypeOf(head[1]) })
+    else throw new Error("CMap cannot be empty.")
+}
+export const cValueMapOf = (value: [CValue, CValue][], keysType: CType, valuesType: CType): CValueMap => {
+    return ({ tag: "map", value, keysType, valuesType })
+}
+
 export type DataNodeSpec = {
     name: string
     nicknames: Record<string, string>
@@ -79,9 +130,14 @@ export function emptyDag(): DagSpec {
     }
 }
 
-export function getDagInputs(dag: DagSpec) {
-    const inIds = R.difference(Object.keys(dag.data), R.keys(dag.inEdges))
-    return Object.entries(dag.data).filter(([id, spec]) => inIds.includes(id))
+export function getDagInputs(dag: DagSpec): [string, DataNodeSpec][] {
+    const dataInputNames = R.pipe(dag.inEdges,
+        R.map(([source, _]) => source),
+        R.unique(),
+        R.filter((source) => !dag.outEdges.some(([_, target]) => target === source))
+    )
+    const filteredInputs = R.filter(Object.entries(dag.data), ([uuid, _]) => dataInputNames.includes(uuid))
+    return filteredInputs
 }
 
 export function parseStringToCValue(cType: CType, value: string): CValue {

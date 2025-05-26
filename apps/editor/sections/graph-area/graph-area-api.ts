@@ -1,6 +1,7 @@
-import { CValue, DataNodeSpec, EngineContext, ModuleNodeSpec, parseStringToCValue } from "@/apps/common/dag-dsl";
+import { CValue, DagSpec, DataNodeSpec, EngineContext, getDagInputs, ModuleNodeSpec, parseStringToCValue } from "@/apps/common/dag-dsl";
 import { useGraphAreaStore } from "./graph-area-state";
 import EditorBackendApi from "../../editor-backend-api";
+import * as R from "remeda"
 
 const GraphAreaApi = {
 
@@ -8,20 +9,25 @@ const GraphAreaApi = {
         useGraphAreaStore.getState().addModuleToDag(module)
     },
 
-    getDagInputs(): Record<string, DataNodeSpec> {
-        return useGraphAreaStore.getState().getDagInputs()
+    getDag(): DagSpec {
+        return useGraphAreaStore.getState().dag
     },
 
-    async runDagWithInputs(inputs: Record<string, string>): Promise<EngineContext> {
+    onDagChange(callback: (dag: DagSpec) => void) {
+        useGraphAreaStore.subscribe((state, previousState) => {
+            return (!R.isDeepEqual(state.dag, previousState.dag)) && callback(state.dag)
+        })
+    },
+
+    async runDagWithInputs(inputs: Record<string, CValue>): Promise<EngineContext> {
         const state = useGraphAreaStore.getState()
-        const specs = state.getDagInputs()
-        const dataNodes = Object.entries(specs).reduce((acc, [uuid, spec]) => {
-            const input = inputs[uuid]
-            return { ...acc, [spec.name]: parseStringToCValue(spec.cType, input) }
-        }, {} as Record<string, CValue>)
-        const result = await EditorBackendApi.runDag(state.dag.name, dataNodes)
+        const result = await EditorBackendApi.runDag(state.dag.name, inputs)
         state.renderEngineContext(result)
         return result
+    },
+
+    cleanEngineContext(): void {
+        useGraphAreaStore.getState().cleanEngineContext()
     },
 }
 

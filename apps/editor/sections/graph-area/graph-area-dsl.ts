@@ -1,10 +1,11 @@
-import * as R from "remeda"
-import Dagre from "@dagrejs/dagre"
 import { CValue, DagSpec, DataNodeSpec, ModuleNodeSpec, ModuleStatus } from "@/apps/common/dag-dsl"
+import Dagre from "@dagrejs/dagre"
 import { applyEdgeChanges, applyNodeChanges, Edge, EdgeChange, getIncomers, getOutgoers, MarkerType, Node, NodeChange, NodeProps, Position } from "@xyflow/react"
-import { GraphAreaState } from "./graph-area-state"
-import EditorBackendApi from "../../editor-backend-api"
+import React from "react"
+import * as R from "remeda"
 import { v4 } from "uuid"
+import EditorBackendApi from "../../editor-backend-api"
+import { GraphAreaState } from "./graph-area-state"
 
 export type RenderedNode = Node<DataNodePayload | ModuleNodePayload, RenderedNodeType>
 
@@ -41,6 +42,15 @@ type StateChange = {
     nodeChanges: NodeChange<RenderedNode>[], 
     edgeChanges: EdgeChange[], 
     dagChanged?: DagSpec 
+}
+
+export type ToolComponentMap = Record<string, ToolComponentData>
+
+export type ToolComponentData = {
+    title: string
+    ariaLabel: string
+    component: React.ReactNode
+    icon: React.ReactNode 
 }
 
 export class GraphAreaStateApi {
@@ -82,6 +92,42 @@ export class GraphAreaStateApi {
 
     setPreferredLayout(layout: LayoutDirection): void {
         this.preferredLayout = layout
+    }
+
+    renderDag(): GraphRender {
+        const graphNodesDict = R.indexBy(this.graph.nodes, (node) => node.id)
+        /* Add new module nodes */
+        const moduleNodes: RenderedNode[] = Object.entries(this.dag.modules).map(([uuid, spec], index) => {
+            const stateNode = graphNodesDict[uuid]
+            if (stateNode) return stateNode
+            else return {
+                id: uuid,
+                type: "module", // Make sure this matches exactly with the nodeTypes in the view
+                data: { tag: "module", ...spec, preferredLayout: this.preferredLayout }, // Include id in data for easier access
+                position: { x: 250, y: index * 100 + 50 },
+            }
+        })
+        /* Add new data nodes */
+        const dataNodes: RenderedNode[] = Object.entries(this.dag.data).map(([uuid, spec], index) => {
+            const stateNode = graphNodesDict[uuid]
+            if (stateNode) return stateNode
+            else return {
+                id: uuid,
+                type: "data", // Make sure this matches exactly with the nodeTypes in the view
+                data: { tag: "data", ...spec, preferredLayout: this.preferredLayout }, // Include id in data for easier access
+                position: { x: 50, y: index * 100 + 50 },
+            }
+        })
+
+        const newNodes = [...moduleNodes, ...dataNodes]
+
+        const newEdges = [...this.dag.inEdges, ...this.dag.outEdges]
+            .map(([source, target]) => this.createEdge(source, target))
+
+        this.graph.nodes = newNodes
+        this.graph.edges = newEdges
+
+        return { dag: this.dag, nodes: newNodes, edges: newEdges, lastAction: "graph-render" }
     }
 
     async addModule(module: ModuleNodeSpec): Promise<GraphRender> {
@@ -223,50 +269,7 @@ export class GraphAreaStateApi {
         this.graph.nodes = newNodes
 
         return { nodes: newNodes, edges: this.graph.edges }
-    }
-
-    renderDag(): GraphRender {
-        const graphNodesDict = R.indexBy(this.graph.nodes, (node) => node.id)
-        /* Add new module nodes */
-        const moduleNodes: RenderedNode[] = Object.entries(this.dag.modules).map(([uuid, spec], index) => {
-            const stateNode = graphNodesDict[uuid]
-            if (stateNode) return stateNode
-            else return {
-                id: uuid,
-                type: "module", // Make sure this matches exactly with the nodeTypes in the view
-                data: { tag: "module", ...spec, preferredLayout: this.preferredLayout }, // Include id in data for easier access
-                position: { x: 250, y: index * 100 + 50 },
-            }
-        })
-        /* Add new data nodes */
-        const dataNodes: RenderedNode[] = Object.entries(this.dag.data).map(([uuid, spec], index) => {
-            const stateNode = graphNodesDict[uuid]
-            if (stateNode) return stateNode
-            else return {
-                id: uuid,
-                type: "data", // Make sure this matches exactly with the nodeTypes in the view
-                data: { tag: "data", ...spec, preferredLayout: this.preferredLayout }, // Include id in data for easier access
-                position: { x: 50, y: index * 100 + 50 },
-            }
-        })
-        /** Keed RenderedNodes that didn't change. */
-        const keptNodes: RenderedNode[] = this.graph.nodes.filter((node) => {
-            if (node.type === "module") 
-                return this.dag.modules[node.id] !== undefined
-            else 
-                return this.dag.data[node.id] !== undefined
-        })
-
-        const newNodes = [...moduleNodes, ...dataNodes, ...keptNodes]
-
-        const newEdges = [...this.dag.inEdges, ...this.dag.outEdges]
-            .map(([source, target]) => this.createEdge(source, target))
-
-        this.graph.nodes = newNodes
-        this.graph.edges = newEdges
-
-        return { dag: this.dag, nodes: newNodes, edges: newEdges, lastAction: "graph-render" }
-    }
+    } 
 
     async applyNodeChanges(changes: NodeChange<RenderedNode>[]): Promise<GraphRender> {
         const { nodeChanges, edgeChanges, dagChanged } = this.computeNodeStateChanges(changes)

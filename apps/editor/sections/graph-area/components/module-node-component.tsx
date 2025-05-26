@@ -58,7 +58,6 @@ export default function ModuleNodeComponent({ id, data }: RenderedNodeProps) {
             <Handle type="target" position={handlePositionTarget} isConnectable={false} />
             <div className="grid grid-cols-1 gap-1">
                 <div className="node-header">{data.name}</div>
-                <div className="node-header">{id}</div>
                 {data.status && (
                     <div className="node-value">
                         <Chip size="sm" variant="flat" color={moduleTagChipClass(data.status)}>{message(data.status)}</Chip>

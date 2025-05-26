@@ -1,0 +1,74 @@
+import { create } from "zustand"
+import * as R from 'remeda'
+import { CValue, DagSpec, DataNodeSpec, EngineContext, getDagInputs } from "@/apps/common/dag-dsl"
+import { cTypeDefaultValue } from "./tool-dag-runner-dsl"
+import EditorBackendApi from "../../editor-backend-api"
+import { GraphAreaApi } from "../graph-area"
+
+export type ToolDagRunnerState = {
+    values: Record<string, [string, CValue]>
+    specs: [string, DataNodeSpec][]
+    engineContext?: EngineContext
+    isSubmitting: boolean
+    getValue(uuid: string): [string, CValue] | undefined
+    setValue(uuid: string, value: CValue): void
+    resetValues(): void
+    forgetValues(uuid: string): void
+    setInputSpecs(dag: DagSpec): void
+    setEngineContext(engineContext?: EngineContext): void
+    runDag(): Promise<void>
+}
+
+export const useToolDagRunnerState = create<ToolDagRunnerState>()((set, get) => ({
+    values: {},
+    specs: [],
+    engineContext: undefined,
+    isSubmitting: false,
+
+    getValue: (uuid) => 
+        get().values[uuid],
+
+    setValue: (uuid: string, value: any) =>
+        set((state) => ({
+            values: {
+                ...state.values,
+                [uuid]: value
+            }
+        })),
+
+    resetValues: () => 
+        set({ values: {} }),
+
+    forgetValues: (uuid) =>
+        set((state) => {
+            return { values: R.omit(state.values, [uuid]) }
+        }),
+
+
+    setInputSpecs: (dag: DagSpec) => {
+        const specs = getDagInputs(dag)
+        const values = specs.reduce((acc, [uuid, spec]) => {
+            if (acc[uuid]) return acc
+            return { ...acc, [uuid]: [spec.name, cTypeDefaultValue(spec.cType)] }
+        }, get().values)
+        set({ specs, values })
+    },
+
+    setEngineContext: (engineContext?: EngineContext) =>
+        set({ engineContext }),
+
+    setIsSubmitting: (isSubmitting: boolean) => 
+        set({ isSubmitting }),
+
+    runDag: async () => {
+        const state = get()
+        set({ isSubmitting: true })
+        try {
+            const data = R.fromEntries(Object.values(state.values))
+            const result = await GraphAreaApi.runDagWithInputs(data)
+            set({ engineContext: result })
+        } finally {
+            set({ isSubmitting: false })
+        }
+    }
+}))

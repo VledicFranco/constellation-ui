@@ -12,7 +12,6 @@ export default function DataNodeComponent({ id, data }: RenderedNodeProps) {
             <Handle type="target" position={handlePositionTarget} isConnectable={false} />
             <div className="grid grid-cols-1 gap-1">
                 <div className="node-header">{data.name}</div>
-                <div>{id}</div>
                 {data.value && (
                     <div className="node-value">
                         <Chip size="sm" color="primary" variant="flat">{parseCValueToString(data.value)}</Chip>

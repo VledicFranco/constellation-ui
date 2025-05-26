@@ -1,4 +1,4 @@
-import { DagSpec, DataNodeSpec, emptyDag, EngineContext, ModuleNodeSpec } from "@/apps/common/dag-dsl"
+import { DagSpec, emptyDag, EngineContext, ModuleNodeSpec } from "@/apps/common/dag-dsl"
 import { applyEdgeChanges, Edge, EdgeChange, NodeChange } from "@xyflow/react"
 import { useEffect } from "react"
 import * as R from "remeda"
@@ -11,10 +11,13 @@ export type GraphAreaState = {
     dag: DagSpec
     nodes: RenderedNode[]
     edges: Edge[]
+    displayedTool?: string
     preferredLayout: LayoutDirection 
     lastAction?: RenderAction
 
     loadDag: (name: string) => Promise<void>
+    diplayTool: (toolName: string) => void
+    hideTools: () => void
 
     onNodesChange: (changes: NodeChange<RenderedNode>[]) => Promise<void>
     onEdgesChange: (changes: EdgeChange[]) => void
@@ -23,8 +26,8 @@ export type GraphAreaState = {
     addModuleToDag: (module: ModuleNodeSpec) => Promise<void>
     deleteNodeModule: (id: string) => void
     canBeDeleted: ({ nodes, edges }: Graph) => Promise<boolean | Graph>
-    getDagInputs: () => { [uuid: string]: DataNodeSpec }
     renderEngineContext: (context: EngineContext) => void
+    cleanEngineContext: () => void
 }
 
 export const useGraphAreaStore = create<GraphAreaState>()(
@@ -40,6 +43,15 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             set(api.renderDag())
         },
 
+        diplayTool: (toolName: string) => {
+            if (toolName === get().displayedTool)
+                set({ displayedTool: undefined })
+            else
+                set({ displayedTool: toolName })
+        },
+
+        hideTools: () => set({ displayedTool: undefined }),
+
         onNodesChange: async (changes: NodeChange<RenderedNode>[]) => {
             const state = get()
             const api = new GraphAreaStateApi(state)
@@ -54,6 +66,7 @@ export const useGraphAreaStore = create<GraphAreaState>()(
 
         onLayoutPress: (layout:  LayoutDirection) => {
             const api = new GraphAreaStateApi(get())
+            api.setPreferredLayout(layout)
             const graph = api.layoutGraph()
             set({ ...graph, preferredLayout: layout })
         },
@@ -77,17 +90,6 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             return { nodes: [...modules], edges: [] }
         },
 
-        getDagInputs: () => {
-            const dag = get().dag
-            const dataInputNames = R.pipe(dag.inEdges,
-                R.map(([source, _]) => source),
-                R.unique(),
-                R.filter((source) => !dag.outEdges.some(([_, target]) => target === source))
-            )
-            const filteredInputs = R.filter(Object.entries(dag.data), ([uuid, _]) => dataInputNames.includes(uuid))
-            return R.fromEntries(filteredInputs)
-        },
-
         renderEngineContext: (context: EngineContext) => {
             const newNodes: RenderedNode[] = get().nodes.map((node) => {
                 if (node.type == "data" && node.data.tag == "data") {
@@ -99,6 +101,18 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             })
             set({ nodes: newNodes, lastAction: "graph-render" })
         },
+
+        cleanEngineContext: () => {
+            const newNodes: RenderedNode[] = get().nodes.map((node) => {
+                if (node.type == "data" && node.data.tag == "data") {
+                    return { ...node, data: { ...node.data, value: undefined } }
+                } else if (node.type == "module" && node.data.tag == "module") {
+                    return {...node, data: { ...node.data, status: undefined }}
+                } else 
+                    throw new Error("Unknown node type")
+            })
+            set({ nodes: newNodes, lastAction: "graph-render" })
+        }
     })
 )
 
