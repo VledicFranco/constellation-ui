@@ -31,25 +31,21 @@ export default function ToolModuleExplorerView(props: ToolModuleExplorerViewProp
             </Autocomplete>
         </div>
         { state.selectedModule && (
-            <div className="flex flex-col gap-2 mt-2 pt-2">
-                <Card className="max-w-full">
-                    <CardHeader className="flex gap-1">
-                        {state.selectedModule.metadata.tags.map((tag) => (
-                            <Chip key={tag} size="sm" className="mr-2" variant="solid" color="primary">
-                                {tag}
-                            </Chip>
-                        ))}
-                    </CardHeader>
-                    <Divider />
-                    <CardBody>
-                        <p>{state.selectedModule.metadata.description}</p>
-                    </CardBody>
-                    <Divider />
-                    <CardFooter>
-                        <Button color="success" variant="bordered" onPress={onAddModule}>Add Module</Button>
-                    </CardFooter>
-                </Card>
-            </div>
+            <Card className="mt-4">
+                <CardHeader className="flex gap-2">
+                    {state.selectedModule.metadata.tags.map((tag) => (
+                        <Chip key={tag} size="sm" variant="solid" color="default">{tag}</Chip>
+                    ))}
+                </CardHeader>
+                <Divider />
+                <CardBody>
+                    <p className="max-w-lg text-wrap">{state.selectedModule.metadata.description}</p>
+                </CardBody>
+                <Divider />
+                <CardFooter>
+                    <Button color="success" variant="bordered" onPress={onAddModule}>Add Module</Button>
+                </CardFooter>
+            </Card>
         )}
     </>
 }

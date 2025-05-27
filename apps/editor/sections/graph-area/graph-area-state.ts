@@ -18,12 +18,12 @@ export type GraphAreaState = {
     lastAction?: RenderAction
 
     loadDag: (name: string) => Promise<void>
-    diplayTool: (toolName: string) => void
     hideTools: () => void
 
     onNodesChange: (changes: NodeChange<RenderedNode>[]) => Promise<void>
     onEdgesChange: (changes: EdgeChange[]) => void
 
+    selectTool: (toolName: string) => void
     selectNode: (id: string) => void
     onLayoutPress: (layout: LayoutDirection) => void
     addModuleToDag: (module: ModuleNodeSpec) => Promise<void>
@@ -46,9 +46,15 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             set(api.renderDag())
         },
 
-        diplayTool: (toolName: string) => {
-            if (toolName === get().displayedTool)
-                set({ displayedTool: undefined })
+        selectTool: (toolName: string) => {
+            const state = get()
+            if (toolName === state.displayedTool)
+                if (toolName === "node-info" && state.selectedNodeId)
+                    set({ selectedNodeId: undefined })
+                else 
+                    set({ displayedTool: undefined })
+            else if (toolName !== "node-info" && state.selectedNodeId)
+                set({ displayedTool: toolName, selectedNodeId: undefined })
             else
                 set({ displayedTool: toolName })
         },
@@ -69,10 +75,12 @@ export const useGraphAreaStore = create<GraphAreaState>()(
 
         selectNode: (id: string) => {
             const state = get()
-            if (state.selectedNodeId === id) {
+            if (state.selectedNodeId === id && state.displayedTool === "node-info")
+                set({ selectedNodeId: undefined })
+            else if (state.selectedNodeId === id) {
                 set({ selectedNodeId: undefined, displayedTool: undefined })
             } else {
-                set({ selectedNodeId: id, displayedTool: "module-info" })
+                set({ selectedNodeId: id, displayedTool: "node-info" })
             }
         },
 

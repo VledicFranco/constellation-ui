@@ -43,7 +43,7 @@ export default function GraphAreaView({ dagName }: GraphAreaViewProps) {
         context: state.context,
         selectedNodeId: state.selectedNodeId,
         displayedTool: state.displayedTool,
-        diplayTool: state.diplayTool,
+        onSelectTool: state.selectTool,
         onNodesChange: state.onNodesChange,
         onEdgesChange: state.onEdgesChange,
         onSelectNode: state.selectNode,
@@ -60,10 +60,10 @@ export default function GraphAreaView({ dagName }: GraphAreaViewProps) {
             component: <ToolModuleExplorerView onAddModule={state.onAddModule} />,
             icon: <Component style={{ fill: 'none', maxWidth: '40px', maxHeight: '40px' } as CSSProperties} />,
         },
-        "module-info": {
+        "node-info": {
             title: "Module Info",
             ariaLabel: "Module Info",
-            component: <ToolNodeInfoView dag={state.dag} context={state.context} nodeId={state.selectedNodeId} />,
+            component: <ToolNodeInfoView dag={state.dag} context={state.context} nodeId={state.selectedNodeId} onNodeSelect={state.onSelectNode}/>,
             icon: <Info style={{ fill: 'none', maxWidth: '40px', maxHeight: '40px' } as CSSProperties} />,
         },
         "dag-runner": {
@@ -107,7 +107,7 @@ export default function GraphAreaView({ dagName }: GraphAreaViewProps) {
                         <MoveHorizontal />
                     </ControlButton>
                 </Controls>
-                <ToolsArea displayedTool={state.displayedTool} toolComponentMap={toolComponentMap} onToolPick={state.diplayTool} />
+                <ToolsArea displayedTool={state.displayedTool} toolComponentMap={toolComponentMap} onToolPick={state.onSelectTool} />
                 <MiniMap position="bottom-left" />
                 <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
             </ReactFlow>

@@ -23,8 +23,6 @@ function ModuleIcon({ status }: { status?: ModuleStatus }) {
     }
 }
 
-
-
 function borderClass(status?: ModuleStatus) {
     switch (status?.tag) {
         case "fired":

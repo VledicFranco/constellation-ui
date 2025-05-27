@@ -5,7 +5,7 @@ import { Box, PackageCheck } from "lucide-react";
 import JsonView from 'react18-json-view';
 import 'react18-json-view/src/style.css';
 
-function DataIcon({ value }: { value?: CType }) {
+export function DataIcon({ value }: { value?: CType }) {
     if (!value) return <Box size="18" />
     else return <PackageCheck size="18" className="text-success-500" />
 }
