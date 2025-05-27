@@ -5,6 +5,8 @@ import { Handle, Position } from "@xyflow/react";
 import cc from "classcat";
 import { BadgeCheck, Bomb, ClockAlert, Component } from "lucide-react";
 import { RenderedNodeProps } from "../graph-area-dsl";
+import { useGraphAreaStore } from "../graph-area-state";
+import { useShallow } from "zustand/react/shallow";
 
 function ModuleIcon({ status }: { status?: ModuleStatus }) {
     switch (status?.tag) {
@@ -41,10 +43,12 @@ export default function ModuleNodeComponent({ id, data }: RenderedNodeProps) {
 
     const handlePositionTarget = data.preferredLayout === "TB" ? Position.Top : Position.Left
     const handlePositionSource = data.preferredLayout === "TB" ? Position.Bottom : Position.Right
+    const isSelected = useGraphAreaStore(useShallow((state) => state.selectedNodeId === id))
+    const borderType = isSelected ? "outline-double outline-3 outline-offset-2" : "outline-solid"
 
     return <>
         <div>
-            <Card radius="sm" shadow="md" className={cc([borderClass(data.status), "border-1"])}>
+            <Card radius="sm" shadow="md" className={cc([borderClass(data.status), borderType, "border-1"])}>
                 <CardBody className="px-4 py-2 flex-col items-start gap-5">
                     <Handle type="target" position={handlePositionTarget} isConnectable={false} />
                     <div className="flex flex-row gap-2 items-center">

@@ -151,10 +151,8 @@ export function cTypeToString(cType: CType): string {
         return "boolean"
     else if (cType.tag === "list")
         return `list<${cTypeToString(cType.valuesType)}>`
-    else if (cType.tag === "map")
+    else 
         return `map<${cTypeToString(cType.keysType)}, ${cTypeToString(cType.valuesType)}>`
-    else
-        throw new Error(`Unsupported CType: ${cType.tag}`)
 }
 
 export function parseStringToCValue(cType: CType, value: string): CValue {
@@ -176,7 +174,7 @@ export function parseStringToCValue(cType: CType, value: string): CValue {
 
 export function parseCValueToString(cValue: CValue): string {
     if (cValue.tag === "string")
-        return cValue.value
+        return `"${cValue.value}"`
     else if (cValue.tag === "integer")
         return cValue.value.toString()
     else if (cValue.tag === "float")
@@ -184,11 +182,33 @@ export function parseCValueToString(cValue: CValue): string {
     else if (cValue.tag === "boolean")
         return cValue.value ? "true" : "false"
     else if (cValue.tag === "list") {
-        return cValue.value.map(v => parseCValueToString(v)).join(", ")
+        return "[" + cValue.value.map(v => {
+            const internal = parseCValueToString(v)
+            return `  ${internal}`
+        }).join(",\n") + "]"
     }
     else {
         return cValue.value.map(([key, value]) => `${parseCValueToString(key)}: ${parseCValueToString(value)}`).join(", ")
     }
+}
+
+export function cValueToJson(cValue: CValue): any {
+    if (cValue.tag === "string")
+        return cValue.value
+    else if (cValue.tag === "integer")
+        return cValue.value
+    else if (cValue.tag === "float")
+        return cValue.value
+    else if (cValue.tag === "boolean")
+        return cValue.value
+    else if (cValue.tag === "list")
+        return cValue.value.map(v => cValueToJson(v))
+    else if (cValue.tag === "map" && cValue.valuesType.tag === "string") 
+        return cValue.value.reduce((acc, [key, value]) => {
+            return {...acc, [cValueToJson(key)]: cValueToJson(value)}
+        }, {})
+    else
+        return Object.fromEntries(cValue.value.map(([key, value]) => [cValueToJson(key), cValueToJson(value)]))
 }
 
 export function emptyModuleMetadata(): ModuleMetadata {

@@ -4,6 +4,8 @@ import { Handle, Position } from "@xyflow/react";
 import cc from "classcat";
 import { Box, PackageCheck } from "lucide-react";
 import { RenderedNodeProps } from "../graph-area-dsl";
+import { useGraphAreaStore } from "../graph-area-state";
+import { useShallow } from "zustand/react/shallow";
 
 function DataIcon({ value }: { value?: CType }) {
     if (!value) return <Box size="12" />
@@ -14,9 +16,11 @@ export default function DataNodeComponent({ id, data }: RenderedNodeProps) {
     if (data.tag !== "data") throw new Error("Invalid node type")
     const handlePositionTarget = data.preferredLayout === "TB" ? Position.Top : Position.Left
     const handlePositionSource = data.preferredLayout === "TB" ? Position.Bottom : Position.Right
-    const border = data.value ? "border-success-100" : "border-default-100";
+    const border = data.value ? "border-success-100" : "border-default-100"
+    const isSelected = useGraphAreaStore(useShallow((state) => state.selectedNodeId === id))
+    const borderType = isSelected ? "outline-double outline-3 outline-offset-2" : "outline-solid"
     return <div>
-        <Card radius="sm" className={cc([border, "border-1"])}>
+        <Card radius="sm" className={cc([border, borderType, "border-1"])}>
             <CardBody className="px-2 py-1 flex-row items-center">
                 <Handle type="target" position={handlePositionTarget} isConnectable={false} />
                 <DataIcon value={data.value} />

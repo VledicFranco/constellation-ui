@@ -16,10 +16,11 @@ import ModuleNodeComponent from "./components/module-node-component";
 import ToolsArea from "./components/tools-area";
 import { RenderedNodeProps, RenderedNodeType, ToolComponentMap } from "./graph-area-dsl";
 import { GraphAreaState, useGraphAreaStore, useInitGraphAreaState } from "./graph-area-state";
-import { Component, MoveHorizontal, MoveVertical, PlayCircle } from "lucide-react";
+import { Component, Info, MoveHorizontal, MoveVertical, PlayCircle } from "lucide-react";
 import { CSSProperties, useMemo } from "react";
 import { ToolDagRunnerView } from "../tool-dag-runner";
 import { ToolModuleExplorerView } from "../tool-module-explorer";
+import { ToolNodeInfoView } from "../tool-node-info";
 
 const nodeTypes: Record<RenderedNodeType, (props: RenderedNodeProps) => JSX.Element> = {
     "data": DataNodeComponent,
@@ -39,10 +40,13 @@ export default function GraphAreaView({ dagName }: GraphAreaViewProps) {
         dag: state.dag,
         nodes: state.nodes,
         edges: state.edges,
+        context: state.context,
+        selectedNodeId: state.selectedNodeId,
         displayedTool: state.displayedTool,
         diplayTool: state.diplayTool,
         onNodesChange: state.onNodesChange,
         onEdgesChange: state.onEdgesChange,
+        onSelectNode: state.selectNode,
         onLayoutPress: state.onLayoutPress,
         onAddModule: state.addModuleToDag,
         onModuleDelete: state.canBeDeleted,
@@ -56,13 +60,19 @@ export default function GraphAreaView({ dagName }: GraphAreaViewProps) {
             component: <ToolModuleExplorerView onAddModule={state.onAddModule} />,
             icon: <Component style={{ fill: 'none', maxWidth: '40px', maxHeight: '40px' } as CSSProperties} />,
         },
+        "module-info": {
+            title: "Module Info",
+            ariaLabel: "Module Info",
+            component: <ToolNodeInfoView dag={state.dag} context={state.context} nodeId={state.selectedNodeId} />,
+            icon: <Info style={{ fill: 'none', maxWidth: '40px', maxHeight: '40px' } as CSSProperties} />,
+        },
         "dag-runner": {
             title: "DAG Runner",
             ariaLabel: "DAG Runner",
             component: <ToolDagRunnerView dag={state.dag} onRun={state.onRunDagWithInputs} onReset={state.onCleanEngineContext} />,
             icon: <PlayCircle style={{ fill: 'none', maxWidth: '40px', maxHeight: '40px' } as CSSProperties} />,
-        }
-    }), [state.dag])
+        },
+    }), [state.dag, state.context, state.selectedNodeId])
 
     /* Only render ReactFlow on the client to avoid hydration issues. */
     if (!isClient) return 
@@ -77,6 +87,7 @@ export default function GraphAreaView({ dagName }: GraphAreaViewProps) {
                 edges={state.edges}
                 onNodesChange={state.onNodesChange}
                 onEdgesChange={state.onEdgesChange}
+                onNodeClick={(_, node) => state.onSelectNode(node.id)}
                 nodeTypes={nodeTypes} 
                 onBeforeDelete={state.onModuleDelete}
                 attributionPosition="bottom-left"

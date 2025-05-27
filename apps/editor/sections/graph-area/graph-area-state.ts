@@ -11,6 +11,8 @@ export type GraphAreaState = {
     dag: DagSpec
     nodes: RenderedNode[]
     edges: Edge[]
+    context?: EngineContext
+    selectedNodeId?: string
     displayedTool?: string
     preferredLayout: LayoutDirection 
     lastAction?: RenderAction
@@ -22,6 +24,7 @@ export type GraphAreaState = {
     onNodesChange: (changes: NodeChange<RenderedNode>[]) => Promise<void>
     onEdgesChange: (changes: EdgeChange[]) => void
 
+    selectNode: (id: string) => void
     onLayoutPress: (layout: LayoutDirection) => void
     addModuleToDag: (module: ModuleNodeSpec) => Promise<void>
     deleteNodeModule: (id: string) => void
@@ -64,6 +67,15 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             set({ edges: applyEdgeChanges(changes, get().edges) })
         },
 
+        selectNode: (id: string) => {
+            const state = get()
+            if (state.selectedNodeId === id) {
+                set({ selectedNodeId: undefined, displayedTool: undefined })
+            } else {
+                set({ selectedNodeId: id, displayedTool: "module-info" })
+            }
+        },
+
         onLayoutPress: (layout:  LayoutDirection) => {
             const api = new GraphAreaStateApi(get())
             api.setPreferredLayout(layout)
@@ -86,7 +98,8 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             const modules = nodes.filter(node => node.type === "module")
             if (modules.length < 1) return false
             const api = new GraphAreaStateApi(get())
-            set(await api.deleteModule(nodes, edges))
+            const graph = await api.deleteModule(nodes, edges)
+            set({ ...graph, selectedNodeId: undefined, displayedTool: undefined })
             return { nodes: [...modules], edges: [] }
         },
 
@@ -101,7 +114,7 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                 } else 
                     throw new Error("Unknown node type")
             })
-            set({ nodes: newNodes, lastAction: "graph-render" })
+            set({ nodes: newNodes, context, lastAction: "graph-render" })
             return context
         },
 
@@ -114,7 +127,7 @@ export const useGraphAreaStore = create<GraphAreaState>()(
                 } else 
                     throw new Error("Unknown node type")
             })
-            set({ nodes: newNodes, lastAction: "graph-render" })
+            set({ nodes: newNodes, context: undefined, lastAction: "graph-render" })
         }
     })
 )
