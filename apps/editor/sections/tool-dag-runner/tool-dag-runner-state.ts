@@ -2,8 +2,6 @@ import { create } from "zustand"
 import * as R from 'remeda'
 import { CValue, DagSpec, DataNodeSpec, EngineContext, getDagInputs } from "@/apps/common/dag-dsl"
 import { cTypeDefaultValue } from "./tool-dag-runner-dsl"
-import EditorBackendApi from "../../editor-backend-api"
-import { GraphAreaApi } from "../graph-area"
 
 export type ToolDagRunnerState = {
     values: Record<string, [string, CValue]>
@@ -16,7 +14,7 @@ export type ToolDagRunnerState = {
     forgetValues(uuid: string): void
     setInputSpecs(dag: DagSpec): void
     setEngineContext(engineContext?: EngineContext): void
-    runDag(): Promise<void>
+    runDag(callback: (inputs: Record<string, CValue>) => Promise<EngineContext>): Promise<void>
 }
 
 export const useToolDagRunnerState = create<ToolDagRunnerState>()((set, get) => ({
@@ -59,12 +57,12 @@ export const useToolDagRunnerState = create<ToolDagRunnerState>()((set, get) => 
     setIsSubmitting: (isSubmitting: boolean) => 
         set({ isSubmitting }),
 
-    runDag: async () => {
+    runDag: async (callback: (inputs: Record<string, CValue>) => Promise<EngineContext>) => {
         const state = get()
         set({ isSubmitting: true })
         try {
             const data = R.fromEntries(Object.values(state.values))
-            const result = await GraphAreaApi.runDagWithInputs(data)
+            const result = await callback(data)
             set({ engineContext: result })
         } finally {
             set({ isSubmitting: false })

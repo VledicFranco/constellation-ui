@@ -1,10 +1,9 @@
+import { CType, cTypeToString } from "@/apps/common/dag-dsl";
+import { Card, CardBody } from "@heroui/card";
 import { Handle, Position } from "@xyflow/react";
-import { RenderedNodeProps } from "../graph-area-dsl";
-import { Chip } from "@heroui/chip";
-import { CType, cTypeToString, parseCValueToString } from "@/apps/common/dag-dsl";
-import { Card, CardFooter, CardBody } from "@heroui/card";
-import { Box, PackageCheck } from "lucide-react";
 import cc from "classcat";
+import { Box, PackageCheck } from "lucide-react";
+import { RenderedNodeProps } from "../graph-area-dsl";
 
 function DataIcon({ value }: { value?: CType }) {
     if (!value) return <Box size="12" />

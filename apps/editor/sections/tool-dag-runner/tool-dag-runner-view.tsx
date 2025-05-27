@@ -18,8 +18,7 @@ import { FormEvent, useEffect } from "react";
 import JsonView from 'react18-json-view';
 import 'react18-json-view/src/style.css';
 
-import { CValue, cValueInt, cValueString, DataNodeSpec } from "@/apps/common/dag-dsl";
-import { GraphAreaApi } from "../graph-area";
+import { CValue, cValueInt, cValueString, DagSpec, DataNodeSpec, EngineContext } from "@/apps/common/dag-dsl";
 import { ToolDagRunnerState, useToolDagRunnerState } from "./tool-dag-runner-state";
 
 interface CInputProps {
@@ -84,20 +83,20 @@ function CNumberInput({ uuid, name, value, onValueChange }: InputProps) {
     />
 }
 
+interface ToolDagRunnerViewProps {
+    dag: DagSpec
+    onRun: (values: Record<string, CValue>) => Promise<EngineContext>
+    onReset: () => void
+}
 
-export default function ToolDagRunnerView() {
+export default function ToolDagRunnerView(props: ToolDagRunnerViewProps) {
     const state = useToolDagRunnerState();
     useEffect(() => {
-        const dag = GraphAreaApi.getDag();
-        state.setInputSpecs(dag);
-        GraphAreaApi.onDagChange((dag) => {
-            state.setInputSpecs(dag)
-        })
-    }, [])
-
+        state.setInputSpecs(props.dag)
+    }, [props.dag])
     const onSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        state.runDag()
+        state.runDag(props.onRun)
     }
 
     // Don't render if there are no data inputs
@@ -110,7 +109,7 @@ export default function ToolDagRunnerView() {
             <Form
                 className="w-full justify-center items-center space-y-4"
                 onSubmit={onSubmit}
-                onReset={() => GraphAreaApi.cleanEngineContext()}>
+                onReset={props.onReset}>
                 <Card className="w-full">
                     <CardHeader className="flex gap-1">
                         DAG Inputs

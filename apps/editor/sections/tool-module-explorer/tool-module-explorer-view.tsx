@@ -1,10 +1,14 @@
 import { Autocomplete, AutocompleteItem } from "@heroui/autocomplete";
 import { Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider } from "@heroui/react";
 import { Key } from "react";
-import { GraphAreaApi } from "../graph-area";
 import { useInitModuleExplorerState, useModuleExplorerState } from "./tool-module-explorer-state";
+import { ModuleNodeSpec } from "@/apps/common/dag-dsl";
 
-export default function ToolModuleExplorerView() {
+interface ToolModuleExplorerViewProps {
+    onAddModule: (module: ModuleNodeSpec) => void
+}
+
+export default function ToolModuleExplorerView(props: ToolModuleExplorerViewProps) {
 
     useInitModuleExplorerState()
     const state = useModuleExplorerState((state) => state)
@@ -14,9 +18,8 @@ export default function ToolModuleExplorerView() {
         selected && state.selectModule(selected)
     }
 
-    const onAddModule = () => {
-        state.selectedModule && GraphAreaApi.addModule(state.selectedModule)
-    }
+    const onAddModule = () => 
+        state.selectedModule && props.onAddModule(state.selectedModule)
 
     return <>
         <div className="flex flex-col gap-2">

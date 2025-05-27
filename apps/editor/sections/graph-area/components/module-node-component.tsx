@@ -1,18 +1,17 @@
 import { ModuleStatus } from "@/apps/common/dag-dsl";
-import { RenderedNodeProps } from "../graph-area-dsl";
-import { Handle, NodeToolbar, Position } from "@xyflow/react";
-import { BadgeCheck, ClockAlert, Component, Info } from "lucide-react";
-import { CSSProperties } from "react";
 import { Chip } from "@heroui/chip";
-import { Card, CardBody, CardHeader } from "@heroui/react";
+import { Card, CardBody } from "@heroui/react";
+import { Handle, Position } from "@xyflow/react";
 import cc from "classcat";
+import { BadgeCheck, Bomb, ClockAlert, Component } from "lucide-react";
+import { RenderedNodeProps } from "../graph-area-dsl";
 
 function ModuleIcon({ status }: { status?: ModuleStatus }) {
     switch (status?.tag) {
         case "fired":
             return <BadgeCheck size="12" className="text-success-500" />
         case "failed":
-            return <Component size="12" className="text-danger-500" />
+            return <Bomb size="12" className="text-danger-500" />
         case "timed":
             return <ClockAlert size="12" className="text-warning-500" />
         case "unfired":
@@ -21,6 +20,8 @@ function ModuleIcon({ status }: { status?: ModuleStatus }) {
             return <Component size="12" className="text-default-500" />
     }
 }
+
+
 
 function borderClass(status?: ModuleStatus) {
     switch (status?.tag) {
@@ -44,7 +45,7 @@ export default function ModuleNodeComponent({ id, data }: RenderedNodeProps) {
     return <>
         <div>
             <Card radius="sm" shadow="md" className={cc([borderClass(data.status), "border-1"])}>
-                <CardBody className="px-4 py-2 flex-col items-start gap-1">
+                <CardBody className="px-4 py-2 flex-col items-start gap-5">
                     <Handle type="target" position={handlePositionTarget} isConnectable={false} />
                     <div className="flex flex-row gap-2 items-center">
                         <ModuleIcon status={data.status} />
