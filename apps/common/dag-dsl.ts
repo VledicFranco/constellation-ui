@@ -140,6 +140,23 @@ export function getDagInputs(dag: DagSpec): [string, DataNodeSpec][] {
     return filteredInputs
 }
 
+export function cTypeToString(cType: CType): string {
+    if (cType.tag === "string")
+        return "string"
+    else if (cType.tag === "integer")
+        return "integer"
+    else if (cType.tag === "float")
+        return "float"
+    else if (cType.tag === "boolean")
+        return "boolean"
+    else if (cType.tag === "list")
+        return `list<${cTypeToString(cType.valuesType)}>`
+    else if (cType.tag === "map")
+        return `map<${cTypeToString(cType.keysType)}, ${cTypeToString(cType.valuesType)}>`
+    else
+        throw new Error(`Unsupported CType: ${cType.tag}`)
+}
+
 export function parseStringToCValue(cType: CType, value: string): CValue {
     if (cType.tag === "string")
         return { tag: "string", value }

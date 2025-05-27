@@ -1,70 +1,74 @@
 import { ModuleStatus } from "@/apps/common/dag-dsl";
 import { RenderedNodeProps } from "../graph-area-dsl";
 import { Handle, NodeToolbar, Position } from "@xyflow/react";
-import { Info } from "lucide-react";
+import { BadgeCheck, ClockAlert, Component, Info } from "lucide-react";
 import { CSSProperties } from "react";
 import { Chip } from "@heroui/chip";
+import { Card, CardBody, CardHeader } from "@heroui/react";
+import cc from "classcat";
 
+function ModuleIcon({ status }: { status?: ModuleStatus }) {
+    switch (status?.tag) {
+        case "fired":
+            return <BadgeCheck size="12" className="text-success-500" />
+        case "failed":
+            return <Component size="12" className="text-danger-500" />
+        case "timed":
+            return <ClockAlert size="12" className="text-warning-500" />
+        case "unfired":
+            return <Component size="12" className="text-default-500" />
+        default:
+            return <Component size="12" className="text-default-500" />
+    }
+}
+
+function borderClass(status?: ModuleStatus) {
+    switch (status?.tag) {
+        case "fired":
+            return "border-success-200";
+        case "failed":
+            return "border-danger-200";
+        case "timed":
+            return "border-warning-200";
+        default:
+            return "border-default-200";
+    }
+}
 
 export default function ModuleNodeComponent({ id, data }: RenderedNodeProps) {
     if (data.tag !== "module") throw new Error("Invalid node type")
-
-    const moduleTagChipClass = (status: ModuleStatus) => {
-        switch (status.tag) {
-            case "fired":
-                return "success";
-            case "failed":
-                return "danger";
-            case "timed":
-                return "warning";
-            case "unfired":
-                return "warning";
-            default:
-                return "default";
-        }
-    }
-
-    const message = (status: ModuleStatus) => {
-        switch (status.tag) {
-            case "fired":
-                return "fired: " + status.latency + "ms";
-            case "failed":
-                return "error: " + status.error;
-            case "timed":
-                return "timed: " + status.latency + "ms";
-            case "unfired":
-                return "unfired";
-            default:
-                return "default";
-        }
-    }
 
     const handlePositionTarget = data.preferredLayout === "TB" ? Position.Top : Position.Left
     const handlePositionSource = data.preferredLayout === "TB" ? Position.Bottom : Position.Right
 
     return <>
-        <NodeToolbar
-            className="border-gray-300 border-1 rounded-sm shadow-md"
-            isVisible={false}
-            position={Position.Right}
-        >
-            <button onClick={() => {
-                // TODO: open module explorer
-            }}>
-                <Info style={{ fill: "none", maxWidth: "15px", maxHeight: "15px" } as CSSProperties} />
-            </button>
-        </NodeToolbar >
         <div>
-            <Handle type="target" position={handlePositionTarget} isConnectable={false} />
-            <div className="grid grid-cols-1 gap-1">
-                <div className="node-header">{data.name}</div>
-                {data.status && (
-                    <div className="node-value">
-                        <Chip size="sm" variant="flat" color={moduleTagChipClass(data.status)}>{message(data.status)}</Chip>
+            <Card radius="sm" shadow="md" className={cc([borderClass(data.status), "border-1"])}>
+                <CardBody className="px-4 py-2 flex-col items-start gap-1">
+                    <Handle type="target" position={handlePositionTarget} isConnectable={false} />
+                    <div className="flex flex-row gap-2 items-center">
+                        <ModuleIcon status={data.status} />
+                        <div className="flex flex-row gap-1">
+                            <p className="block text-md font-bold text-sm">{data.name}</p>
+                            <small className="block text-default-500">v{data.metadata.version}</small>
+                        </div>
                     </div>
-                )}
-            </div>
-            <Handle type="source" position={handlePositionSource} isConnectable={false} />
+                    <div className="flex flex-row gap-1">
+                        {data.metadata.tags.map((tag, index) => (
+                            <Chip
+                                key={index}
+                                size="sm"
+                                variant="flat"
+                                color="default"
+                                className="text-xs"
+                            >
+                                <small className="text-default-500">{tag}</small>
+                            </Chip>
+                        ))}
+                    </div>
+                    <Handle type="source" position={handlePositionSource} isConnectable={false} />
+                </CardBody>
+            </Card>
         </div >
     </>
 }

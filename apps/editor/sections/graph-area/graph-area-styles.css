@@ -34,13 +34,16 @@
 /* Customizing Default Theming */
 
 
+/*
 .react-flow__node-toolbar {
     background-color: #ffffff;
 }
+*/
 
+/* 
 .react-flow__node {
     box-shadow: var(--xy-node-boxshadow-default);
-    border-radius: var(--xy-node-border-radius-default);
+    border-radius: var(--xy-node-border-radius-default); 
     background-color: var(--xy-node-background-color-default);
     display: flex;
     justify-content: center;
@@ -52,30 +55,42 @@
     border: var(--xy-node-border-default);
     color: var(--xy-node-color, var(--xy-node-color-default));
 }
+*/
 
+/*
 .react-flow__node.selectable:focus {
     box-shadow: 0px 0px 0px 4px var(--xy-theme-color-focus);
     border-color: #d9d9d9;
 }
+*/
 
+/*
 .react-flow__node.selectable:focus:active {
     box-shadow: var(--xy-node-boxshadow-default);
 }
+*/
 
+/*
 .react-flow__node.selectable:hover,
 .react-flow__node.draggable:hover {
     border-color: var(--xy-theme-hover);
 }
+*/
 
+
+/*
 .react-flow__node.selectable.selected {
     border-color: var(--xy-theme-selected);
     box-shadow: var(--xy-node-boxshadow-default);
 }
+*/
 
+/*
 .react-flow__node-group {
     background-color: rgba(207, 182, 255, 0.4);
     border-color: #9e86ed;
 }
+*/
 
 .react-flow__edge.selectable:hover .react-flow__edge-path,
 .react-flow__edge.selectable.selected .react-flow__edge-path {
@@ -125,12 +140,14 @@
   Use these classes to apply consistent theming across your components.
 */
 
+/*
 :root {
     --color-primary: #ff0073;
     --color-background: #fefefe;
     --color-hover-bg: #f6f6f6;
     --color-disabled: #76797e;
 }
+*/
 
 /* Custom Button Styling */
 .xy-theme__button {
@@ -232,7 +249,9 @@
     font-size: 1rem;
     color: inherit;
     margin-right: 0.5rem;
+    /*
     box-shadow: var(--xy-node-boxshadow-default);
+    */
 }
 
 .xy-theme__select:focus {
@@ -247,6 +266,7 @@
     display: inline-block;
 }
 
+/*
 .react-flow__node-data {
     border-color: #6fa3f7;
 }
@@ -262,3 +282,4 @@
 .dark .react-flow__node-module {
     border-color: #ff0073;
 }
+*/
