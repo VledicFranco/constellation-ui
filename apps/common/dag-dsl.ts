@@ -85,15 +85,16 @@ export type DataNodeSpec = {
     cType: CType
 }
 
-export type ModuleMetadata = {
+export type ModuleMetadata<Context = any> = {
     description: string
     tags: string[]
     version: string
+    context?: Context
 }
 
-export type ModuleNodeSpec = {
+export type ModuleNodeSpec<Context = any> = {
     name: string
-    metadata: ModuleMetadata
+    metadata: ModuleMetadata<Context>
     produces: Record<string, CType>
     consumes: Record<string, CType>
 }
@@ -108,7 +109,7 @@ export type DagSpec = {
 
 export type ModuleStatus
     = { tag: "unfired" }
-    | { tag: "fired", latency: number }
+    | { tag: "fired", latency: number, context?: any }
     | { tag: "timed", latency: number }
     | { tag: "failed", error: string }
 

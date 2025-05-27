@@ -1,7 +1,9 @@
-import { DagSpec, EngineContext, ModuleNodeSpec, ModuleStatus } from "@/apps/common/dag-dsl"
+import { DagSpec, EngineContext, ModuleMetadata, ModuleNodeSpec, ModuleStatus } from "@/apps/common/dag-dsl"
 import { Card, CardBody, CardHeader } from "@heroui/card"
-import { Chip, Code, Divider } from "@heroui/react"
-import { BadgeCheck, Bomb, ClockAlert, Component } from "lucide-react"
+import { Accordion, AccordionItem, Chip, Code, Divider, ScrollShadow } from "@heroui/react"
+import { BadgeCheck, Bomb, ClockAlert, Component, FileText, Telescope } from "lucide-react"
+import JsonView from 'react18-json-view';
+import 'react18-json-view/src/style.css';
 
 export function ModuleIcon({ status }: { status?: ModuleStatus }) {
     switch (status?.tag) {
@@ -27,6 +29,48 @@ function Status({ status }: { status: ModuleStatus }) {
         return <Code color="warning">Timed: {status.latency}ms</Code>
     else
         return <Code color="default">Unfired</Code>
+}
+
+type KomodoModuleMetadata = {
+    tag: "komodo-model"
+    batchSize: number
+    featureLoggingEnabled: boolean
+    providedFeatures: string[]
+    retrievalFeatures: string[]
+}
+
+function KomodoModuleContextView({ metadata }: { metadata?: ModuleMetadata<KomodoModuleMetadata> }) {
+    if (!metadata?.context || metadata.context.tag !== "komodo-model") return null
+
+    return <div className="mt-3">
+        <Accordion variant="splitted">
+            <AccordionItem key="1" aria-label="Model Metadata" title="Model Metadata" startContent={<FileText />}>
+            
+                <ScrollShadow style={{ maxHeight: '500px' }}>
+                    <JsonView src={metadata.context} />
+                </ScrollShadow>
+            </AccordionItem>
+        </Accordion>
+    </div>
+}
+
+type KomodoStatusContext = {
+    tag: "komodo-model"
+    sharedFeatures: Record<string, any>
+    retrievalFeatures: Record<string, any>
+}
+
+function KomodoStatusContextView({ status }: { status?: ModuleStatus<KomodoStatusContext> }) {
+    if (status?.tag !== "fired" || !status.context || status.context.tag !== "komodo-model") return null
+    return <div className="mt-3">
+        <Accordion variant="splitted">
+            <AccordionItem key="1" aria-label="Features" title="Features" startContent={<Telescope />}>
+                <ScrollShadow style={{ maxHeight: '500px' }}>
+                    <JsonView src={status.context} />
+                </ScrollShadow>
+            </AccordionItem>
+        </Accordion>
+    </div>
 }
 
 interface DataNodeInfoProps {
@@ -67,7 +111,9 @@ export default function ModuleNodeInfoView({ dag, spec, context, status }: DataN
                 <Status status={status} />
             </>}
             <p className="text-sm text-default-500 mt-3 mb-1">Description</p>
-            <p className="text-md text-default-800 max-w-lg text-wrap">{spec.metadata.description}</p>
+            <p className="text-md text-default-600 max-w-lg text-wrap">{spec.metadata.description}</p>
+            <KomodoModuleContextView metadata={spec.metadata} />
+            { (context && status) && <KomodoStatusContextView status={status} />}
         </CardBody>
     </Card>
 }
