@@ -14,7 +14,7 @@ const EditorBackendApi = {
     },
 
     async saveDag(dag: DagSpec): Promise<void> {
-        return (await request("post", `/dag/${dag.name}`, dag)).data.data
+        return (await request("put", `/dag/${dag.name}`, dag)).data.data
     },
 
     async runDag(name: string, inputs: Record<string, CValue>): Promise<EngineContext> {

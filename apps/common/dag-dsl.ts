@@ -107,9 +107,15 @@ export type DagSpec = {
     outEdges: [string, string][] // module node -> data node
 }
 
-export type ModuleStatus
+export type DagMetadata = {
+    description: string
+    tags: string[]
+    version: string
+}
+
+export type ModuleStatus<Context = any>
     = { tag: "unfired" }
-    | { tag: "fired", latency: number, context?: any }
+    | { tag: "fired", latency: number, context?: Context }
     | { tag: "timed", latency: number }
     | { tag: "failed", error: string }
 

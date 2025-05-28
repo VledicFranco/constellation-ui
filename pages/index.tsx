@@ -1,11 +1,11 @@
-import HomeView from "@/apps/home/home-view";
+import { BrowserDagsView } from "@/apps/browser-dags";
 import DefaultLayout from "@/layouts/default";
 
 export default function IndexPage() {
 
   return (
     <DefaultLayout>
-      <HomeView />
+      <BrowserDagsView />
     </DefaultLayout>
   );
 }
