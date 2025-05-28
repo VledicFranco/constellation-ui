@@ -19,7 +19,7 @@ export default function UnselectedNodeInfo({ dag, context, onNodeSelect }: Unsel
             <p className="text-sm text-default-500 mb-1">Modules</p>
             <div className="flex flex-col gap-2 items-start">
                 {Object.entries(dag.modules).map(([nodeId, node]) => (
-                    <Button variant="bordered" radius="sm" key={nodeId} onPress={() => onNodeSelect?.(nodeId)}>
+                    <Button className="border-secondary-300" variant="bordered" radius="sm" key={nodeId} onPress={() => onNodeSelect?.(nodeId)}>
                         <ModuleIcon status={context?.moduleStatus[nodeId]} />
                         <div className="flex flex-row gap-1">
                             <p className="text-lg font-bold">{node.name}</p>
@@ -31,7 +31,7 @@ export default function UnselectedNodeInfo({ dag, context, onNodeSelect }: Unsel
             <p className="text-sm text-default-500 mt-3 mb-1">Data</p>
             <div className="flex flex-col gap-2 items-start">
                 {Object.entries(dag.data).map(([nodeId, node]) => (
-                    <Button variant="bordered" radius="sm" key={nodeId} onPress={() => onNodeSelect?.(nodeId)}>
+                    <Button className="border-primary-200" variant="bordered" radius="sm" key={nodeId} onPress={() => onNodeSelect?.(nodeId)}>
                         <DataIcon value={context?.loadedData[nodeId]} />
                         <p className="text-lg font-bold text-default-600 pl-1">{node.name}</p>
                         <p className="text-lg text-default-500 font-mono">:{cTypeToString(node.cType)}</p>

@@ -16,7 +16,7 @@ export default function DataNodeComponent({ id, data }: RenderedNodeProps) {
     if (data.tag !== "data") throw new Error("Invalid node type")
     const handlePositionTarget = data.preferredLayout === "TB" ? Position.Top : Position.Left
     const handlePositionSource = data.preferredLayout === "TB" ? Position.Bottom : Position.Right
-    const border = data.value ? "border-success-100" : "border-default-100"
+    const border = data.value ? "border-success-100" : "border-primary-200"
     const isSelected = useGraphAreaStore(useShallow((state) => state.selectedNodeId === id))
     const borderType = isSelected ? "outline-double outline-3 outline-offset-2" : "outline-solid"
     return <div>

@@ -32,7 +32,7 @@ function borderClass(status?: ModuleStatus) {
         case "timed":
             return "border-warning-200";
         default:
-            return "border-default-200";
+            return "border-secondary-300";
     }
 }
 
