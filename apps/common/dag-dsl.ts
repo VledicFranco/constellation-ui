@@ -98,7 +98,7 @@ export type ModuleNodeSpec<Context = any> = {
     consumes: Record<string, CType>
     produces: Record<string, CType>
     config: ModuleRuntimeConfig
-    context?: Context
+    definitionContext?: Context
 }
 
 export type ModuleRuntimeConfig = {

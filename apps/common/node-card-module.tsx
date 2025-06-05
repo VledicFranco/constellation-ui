@@ -1,10 +1,10 @@
-import { ComponentMetadata, DagSpec, ModuleNodeSpec, ModuleStatus, RuntimeState } from "@/apps/common/dag-dsl";
-import { Card, CardBody, CardHeader } from "@heroui/card";
-import { Accordion, AccordionItem, Chip, Code, Divider, ScrollShadow } from "@heroui/react";
-import cc from "classcat";
-import { BadgeCheck, Bomb, ClockAlert, Component, FileText, Telescope } from "lucide-react";
+import { DagSpec, RuntimeState, ComponentMetadata, ModuleNodeSpec, ModuleStatus } from "@/apps/common/dag-dsl"
+import { Card, CardBody, CardHeader } from "@heroui/card"
+import { Accordion, AccordionItem, Chip, Code, Divider, ScrollShadow } from "@heroui/react"
+import { BadgeCheck, Bomb, ClockAlert, Component, FileText, Telescope } from "lucide-react"
 import JsonView from 'react18-json-view';
 import 'react18-json-view/src/style.css';
+import cc from "classcat";
 
 export function ModuleIcon({ status }: { status?: ModuleStatus }) {
     switch (status?.tag) {
@@ -128,7 +128,7 @@ export default function NodeCardModule({ dag, spec, context, status, isSelected 
             </>}
             <p className="text-sm text-default-500 mt-3 mb-1">Description</p>
             <p className="text-md text-default-600 max-w-lg text-wrap">{spec.metadata.description}</p>
-            <KomodoModuleContextView metadata={spec.metadata} />
+            <KomodoModuleContextView metadata={spec.metadata} context={spec.definitionContext} />
             { (context && status) && <KomodoStatusContextView status={status} />}
         </CardBody>
     </Card>
