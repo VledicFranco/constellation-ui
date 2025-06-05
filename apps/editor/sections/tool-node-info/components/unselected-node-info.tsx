@@ -1,8 +1,8 @@
 import { cTypeToString, DagSpec, RuntimeState } from "@/apps/common/dag-dsl";
 import { Button } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
-import { ModuleIcon } from "./module-node-info";
-import { DataIcon } from "./data-node-info";
+import { DataIcon } from "@/apps/common/node-card-data";
+import { ModuleIcon } from "@/apps/common/node-card-module";
 
 interface UnselectedNodeInfoProps {
     dag: DagSpec

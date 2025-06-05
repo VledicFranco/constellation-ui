@@ -1,7 +1,7 @@
 import { DagSpec, RuntimeState } from "@/apps/common/dag-dsl";
-import DataNodeInfo from "./components/data-node-info";
-import ModuleNodeInfo from "./components/module-node-info";
 import UnselectedNodeInfo from "./components/unselected-node-info";
+import NodeCardData from "@/apps/common/node-card-data";
+import NodeCardModule from "@/apps/common/node-card-module";
 
 interface ToolNodeInfoViewProps {
     dag: DagSpec
@@ -15,9 +15,9 @@ export default function ToolNodeInfoView({ dag, context, nodeId, onNodeSelect }:
     const moduleNode = nodeId ? dag.modules[nodeId] : undefined;
 
     if (nodeId && dataNode)
-        return <DataNodeInfo dag={dag} spec={dataNode} nodeId={nodeId} data={nodeId ? context?.data[nodeId] : undefined } />
+        return <NodeCardData dag={dag} spec={dataNode} nodeId={nodeId} data={nodeId ? context?.data[nodeId] : undefined } />
     else if (nodeId && moduleNode)
-        return <ModuleNodeInfo dag={dag} spec={moduleNode} context={context} status={nodeId ? context?.moduleStatus[nodeId] : undefined} />
+        return <NodeCardModule dag={dag} spec={moduleNode} context={context} status={nodeId ? context?.moduleStatus[nodeId] : undefined} />
     else
         return <UnselectedNodeInfo dag={dag} context={context} onNodeSelect={onNodeSelect} />
 }

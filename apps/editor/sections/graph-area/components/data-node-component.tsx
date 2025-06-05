@@ -1,33 +1,18 @@
-import { CType, cTypeToString } from "@/apps/common/dag-dsl";
-import { Card, CardBody } from "@heroui/card";
+import NodeCardData from "@/apps/common/node-card-data";
 import { Handle, Position } from "@xyflow/react";
-import cc from "classcat";
-import { Box, PackageCheck } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
 import { RenderedNodeProps } from "../graph-area-dsl";
 import { useGraphAreaStore } from "../graph-area-state";
-import { useShallow } from "zustand/react/shallow";
-
-function DataIcon({ value }: { value?: CType }) {
-    if (!value) return <Box size="12" />
-    else return <PackageCheck size="12" className="text-success-500" />
-}
 
 export default function DataNodeComponent({ id, data }: RenderedNodeProps) {
     if (data.tag !== "data") throw new Error("Invalid node type")
     const handlePositionTarget = data.preferredLayout === "TB" ? Position.Top : Position.Left
     const handlePositionSource = data.preferredLayout === "TB" ? Position.Bottom : Position.Right
-    const border = data.value ? "border-success-100" : "border-primary-200"
     const isSelected = useGraphAreaStore(useShallow((state) => state.selectedNodeId === id))
-    const borderType = isSelected ? "outline-double outline-3 outline-offset-2" : "outline-solid"
+    const cardProps = { ...data.cardProps, isSelected}
     return <div>
-        <Card radius="sm" className={cc([border, borderType, "border-1"])}>
-            <CardBody className="px-2 py-1 flex-row items-center">
-                <Handle type="target" position={handlePositionTarget} isConnectable={false} />
-                <DataIcon value={data.value} />
-                <p className="text-tiny font-bold text-default-600 pl-1">{data.name}</p>
-                <small className="text-default-500 font-mono">:{cTypeToString(data.cType)}</small>
-                <Handle type="source" position={handlePositionSource} isConnectable={false} />
-            </CardBody>
-        </Card>
+        <Handle type="target" position={handlePositionTarget} isConnectable={false} />
+        <NodeCardData {...cardProps} />
+        <Handle type="source" position={handlePositionSource} isConnectable={false} />
     </div>
 }

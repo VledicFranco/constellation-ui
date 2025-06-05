@@ -1,4 +1,6 @@
-import { CValue, DagSpec, DataNodeSpec, ModuleNodeSpec, ModuleStatus } from "@/apps/common/dag-dsl"
+import { DagSpec, DataNodeSpec, ModuleNodeSpec } from "@/apps/common/dag-dsl"
+import { NodeCardDataProps } from "@/apps/common/node-card-data"
+import { NodeCardModuleProps } from "@/apps/common/node-card-module"
 import Dagre from "@dagrejs/dagre"
 import { applyEdgeChanges, applyNodeChanges, Edge, EdgeChange, getIncomers, getOutgoers, MarkerType, Node, NodeChange, NodeProps, Position } from "@xyflow/react"
 import React from "react"
@@ -11,14 +13,14 @@ export type RenderedNode = Node<DataNodePayload | ModuleNodePayload, RenderedNod
 
 export type RenderedNodeProps = NodeProps<RenderedNode>
 
-export type DataNodePayload = DataNodeSpec & CommonPayload & {
+export type DataNodePayload = CommonPayload & {
     tag: "data"
-    value?: CValue
+    cardProps: NodeCardDataProps
 }
 
-export type ModuleNodePayload = ModuleNodeSpec & CommonPayload & {
+export type ModuleNodePayload = CommonPayload & {
     tag: "module"
-    status?: ModuleStatus
+    cardProps: NodeCardModuleProps    
 }
 
 export type CommonPayload = {
@@ -103,7 +105,15 @@ export class GraphAreaStateApi {
             else return {
                 id: uuid,
                 type: "module", // Make sure this matches exactly with the nodeTypes in the view
-                data: { tag: "module", ...spec, preferredLayout: this.preferredLayout }, // Include id in data for easier access
+                data: { 
+                    tag: "module", 
+                    cardProps: {
+                        dag: this.dag,
+                        nodeId: uuid,
+                        spec: spec,
+                    },
+                    preferredLayout: this.preferredLayout 
+                }, // Include id in data for easier access
                 position: { x: 250, y: index * 100 + 50 },
             }
         })
@@ -114,7 +124,14 @@ export class GraphAreaStateApi {
             else return {
                 id: uuid,
                 type: "data", // Make sure this matches exactly with the nodeTypes in the view
-                data: { tag: "data", ...spec, preferredLayout: this.preferredLayout }, // Include id in data for easier access
+                data: { 
+                    tag: "data", 
+                    cardProps: {
+                        dag: this.dag,
+                        nodeId: uuid,
+                        spec: spec
+                    },
+                    preferredLayout: this.preferredLayout }, // Include id in data for easier access
                 position: { x: 50, y: index * 100 + 50 },
             }
         })

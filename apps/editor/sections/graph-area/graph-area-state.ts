@@ -1,4 +1,4 @@
-import { CValue, DagSpec, emptyDag, RuntimeState, ModuleNodeSpec } from "@/apps/common/dag-dsl"
+import { CValue, DagSpec, emptyDag, ModuleNodeSpec, RuntimeState } from "@/apps/common/dag-dsl"
 import { applyEdgeChanges, Edge, EdgeChange, NodeChange } from "@xyflow/react"
 import { useEffect } from "react"
 import * as R from "remeda"
@@ -116,9 +116,9 @@ export const useGraphAreaStore = create<GraphAreaState>()(
             const context = await EditorBackendApi.runDag(state.dag.metadata.name, inputs)
             const newNodes: RenderedNode[] = state.nodes.map((node) => {
                 if (node.type == "data" && node.data.tag == "data") {
-                    return { ...node, data: { ...node.data, value: context.data[node.id] } }
+                    return { ...node, data: { ...node.data, cardProps: { ...node.data.cardProps, data: context.data[node.id] } } }
                 } else if (node.type == "module" && node.data.tag == "module") {
-                    return {...node, data: { ...node.data, status: context.moduleStatus[node.id] }}
+                    return { ...node, data: { ...node.data, cardProps: { ...node.data.cardProps, status: context.moduleStatus[node.id], context: context } } }
                 } else 
                     throw new Error("Unknown node type")
             })
@@ -129,9 +129,9 @@ export const useGraphAreaStore = create<GraphAreaState>()(
         cleanEngineContext: () => {
             const newNodes: RenderedNode[] = get().nodes.map((node) => {
                 if (node.type == "data" && node.data.tag == "data") {
-                    return { ...node, data: { ...node.data, value: undefined } }
+                    return { ...node, data: { ...node.data, cardProps: { ...node.data.cardProps, data: undefined } } }
                 } else if (node.type == "module" && node.data.tag == "module") {
-                    return {...node, data: { ...node.data, status: undefined }}
+                    return {...node, data: { ...node.data, cardProps: { ...node.data.cardProps, status: undefined, context: undefined } }}
                 } else 
                     throw new Error("Unknown node type")
             })

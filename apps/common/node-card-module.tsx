@@ -1,7 +1,8 @@
-import { DagSpec, RuntimeState, ComponentMetadata, ModuleNodeSpec, ModuleStatus } from "@/apps/common/dag-dsl"
-import { Card, CardBody, CardHeader } from "@heroui/card"
-import { Accordion, AccordionItem, Chip, Code, Divider, ScrollShadow } from "@heroui/react"
-import { BadgeCheck, Bomb, ClockAlert, Component, FileText, Telescope } from "lucide-react"
+import { ComponentMetadata, DagSpec, ModuleNodeSpec, ModuleStatus, RuntimeState } from "@/apps/common/dag-dsl";
+import { Card, CardBody, CardHeader } from "@heroui/card";
+import { Accordion, AccordionItem, Chip, Code, Divider, ScrollShadow } from "@heroui/react";
+import cc from "classcat";
+import { BadgeCheck, Bomb, ClockAlert, Component, FileText, Telescope } from "lucide-react";
 import JsonView from 'react18-json-view';
 import 'react18-json-view/src/style.css';
 
@@ -17,6 +18,19 @@ export function ModuleIcon({ status }: { status?: ModuleStatus }) {
             return <Component size="18" className="text-default-500" />
         default:
             return <Component size="18" className="text-default-500" />
+    }
+}
+
+function borderClass(status?: ModuleStatus) {
+    switch (status?.tag) {
+        case "Fired":
+            return "border-success-200";
+        case "Failed":
+            return "border-danger-200";
+        case "Timed":
+            return "border-warning-200";
+        default:
+            return "border-secondary-300";
     }
 }
 
@@ -73,15 +87,17 @@ function KomodoStatusContextView({ status }: { status?: ModuleStatus<KomodoStatu
     </div>
 }
 
-interface DataNodeInfoProps {
+export interface NodeCardModuleProps {
     dag: DagSpec
     spec: ModuleNodeSpec
     context?: RuntimeState
     status?: ModuleStatus
+    isSelected?: boolean
 }
 
-export default function ModuleNodeInfoView({ dag, spec, context, status }: DataNodeInfoProps) {
-    return <Card>
+export default function NodeCardModule({ dag, spec, context, status, isSelected }: NodeCardModuleProps) {
+    const borderType = isSelected ? "outline-double outline-3 outline-offset-2" : "outline-solid"
+    return <Card shadow="md" className={cc([borderClass(status), borderType, "border-1"])}>
         <CardHeader>
             <div className="flex flex-row gap-2 items-center">
                 <ModuleIcon status={status} />
