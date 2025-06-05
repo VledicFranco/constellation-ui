@@ -10,13 +10,13 @@ import { useShallow } from "zustand/react/shallow";
 
 function ModuleIcon({ status }: { status?: ModuleStatus }) {
     switch (status?.tag) {
-        case "fired":
+        case "Fired":
             return <BadgeCheck size="12" className="text-success-500" />
-        case "failed":
+        case "Failed":
             return <Bomb size="12" className="text-danger-500" />
-        case "timed":
+        case "Timed":
             return <ClockAlert size="12" className="text-warning-500" />
-        case "unfired":
+        case "Unfired":
             return <Component size="12" className="text-default-500" />
         default:
             return <Component size="12" className="text-default-500" />
@@ -25,11 +25,11 @@ function ModuleIcon({ status }: { status?: ModuleStatus }) {
 
 function borderClass(status?: ModuleStatus) {
     switch (status?.tag) {
-        case "fired":
+        case "Fired":
             return "border-success-200";
-        case "failed":
+        case "Failed":
             return "border-danger-200";
-        case "timed":
+        case "Timed":
             return "border-warning-200";
         default:
             return "border-secondary-300";
@@ -52,8 +52,8 @@ export default function ModuleNodeComponent({ id, data }: RenderedNodeProps) {
                     <div className="flex flex-row gap-2 items-center">
                         <ModuleIcon status={data.status} />
                         <div className="flex flex-row gap-1">
-                            <p className="block text-md font-bold text-sm">{data.name}</p>
-                            <small className="block text-default-500">v{data.metadata.version}</small>
+                            <p className="block text-md font-bold text-sm">{data.metadata.name}</p>
+                            <small className="block text-default-500">v{data.metadata.majorVersion}.{data.metadata.minorVersion}</small>
                         </div>
                     </div>
                     <div className="flex flex-row gap-1">

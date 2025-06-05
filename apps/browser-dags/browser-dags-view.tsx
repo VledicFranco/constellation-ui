@@ -2,7 +2,7 @@ import { Button, Card, CardBody, CardFooter, CardHeader, Input, Link, ScrollShad
 import { useCallback, useEffect, useState } from "react";
 
 import { SquarePlus, SquarePen } from "lucide-react";
-import { DagMetadata } from "../common/dag-dsl";
+import { ComponentMetadata } from "../common/dag-dsl";
 import BrowserDagsBackendApi from "./browser-dags-backend-api";
 import * as R from "remeda";
 
@@ -96,7 +96,7 @@ function CreateDagCard() {
     )
 }
 
-function DagCard({ name, metadata }: { name: string, metadata: DagMetadata }) {
+function DagCard({ name, metadata }: { name: string, metadata: ComponentMetadata }) {
     return (
         <Card>
             <CardHeader className="h-[100px] flex items-center">
@@ -123,7 +123,7 @@ function DagCard({ name, metadata }: { name: string, metadata: DagMetadata }) {
 
 export default function BrowserDags() {
 
-    const [dags, setDags] = useState<Record<string, DagMetadata>>({})
+    const [dags, setDags] = useState<Record<string, ComponentMetadata>>({})
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {

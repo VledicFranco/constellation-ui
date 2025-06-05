@@ -14,7 +14,7 @@ export default function ToolModuleExplorerView(props: ToolModuleExplorerViewProp
     const state = useModuleExplorerState((state) => state)
 
     const onModuleSelectionChange = (key: Key | null) => {
-        const selected = state.modules.find((module) => module.name === key)
+        const selected = state.modules.find((module) => module.metadata.name === key)
         selected && state.selectModule(selected)
     }
 
@@ -26,7 +26,7 @@ export default function ToolModuleExplorerView(props: ToolModuleExplorerViewProp
             <Autocomplete size="sm" label="Modules" placeholder="Search for your module"
                 onSelectionChange={onModuleSelectionChange}>
                 {state.modules.map((module) => (
-                    <AutocompleteItem key={module.name}>{module.name}</AutocompleteItem>
+                    <AutocompleteItem key={module.metadata.name}>{module.metadata.name}</AutocompleteItem>
                 ))}
             </Autocomplete>
         </div>

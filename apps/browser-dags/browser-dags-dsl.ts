@@ -1,5 +1,5 @@
-import { DagMetadata } from "../common/dag-dsl";
+import { ComponentMetadata } from "../common/dag-dsl";
 
 export type CreateDagResponse 
-    = { tag: "created", metadata: DagMetadata }
+    = { tag: "created", metadata: ComponentMetadata }
     | { tag: "exists", message: string };

@@ -35,7 +35,7 @@ export default function ToolNodeInfoView({ dag, nodeId, spec, data }: ToolNodeIn
                 const module = dag.modules[moduleUuid]
                 const isConsumes = dag.inEdges.filter(([data, target]) => data === nodeId && target === moduleUuid).length > 0
                 const arrow = isConsumes ? "<-" : "->"
-                return <Code className="mt-1">{`${module?.name} ${arrow} (${nickname})`}</Code>
+                return <Code className="mt-1">{`${module?.metadata.name} ${arrow} (${nickname})`}</Code>
             })}
         </CardBody>
     </Card>

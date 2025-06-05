@@ -2,19 +2,19 @@ import { CType, CValue, cValueBoolean, cValueFloat, cValueInt, cValueListOf, cVa
 
 export function cTypeDefaultValue(cType: CType): CValue {
     switch(cType.tag) {
-        case "string":
+        case "CString":
             return cValueString("");
-        case "integer":
+        case "CInt":
             return cValueInt(0);
-        case "boolean":
+        case "CBoolean":
             return cValueBoolean(false);
-        case "float":
+        case "CFloat":
             return cValueFloat(0.0);
-        case "list":
+        case "CList":
             return cValueListOf([], cType.valuesType);
-        case "map":
+        case "CMap":
             return cValueMapOf([], cType.keysType, cType.valuesType);
         default:
-            throw new Error(`Unsupported CType`);
+            throw new Error(`Unsupported CType: ${cType}`);
     }
 }

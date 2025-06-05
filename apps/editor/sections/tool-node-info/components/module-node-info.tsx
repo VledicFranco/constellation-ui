@@ -1,4 +1,4 @@
-import { DagSpec, EngineContext, ModuleMetadata, ModuleNodeSpec, ModuleStatus } from "@/apps/common/dag-dsl"
+import { DagSpec, RuntimeState, ComponentMetadata, ModuleNodeSpec, ModuleStatus } from "@/apps/common/dag-dsl"
 import { Card, CardBody, CardHeader } from "@heroui/card"
 import { Accordion, AccordionItem, Chip, Code, Divider, ScrollShadow } from "@heroui/react"
 import { BadgeCheck, Bomb, ClockAlert, Component, FileText, Telescope } from "lucide-react"
@@ -7,13 +7,13 @@ import 'react18-json-view/src/style.css';
 
 export function ModuleIcon({ status }: { status?: ModuleStatus }) {
     switch (status?.tag) {
-        case "fired":
+        case "Fired":
             return <BadgeCheck size="18" className="text-success-500" />
-        case "failed":
+        case "Failed":
             return <Bomb size="18" className="text-danger-500" />
-        case "timed":
+        case "Timed":
             return <ClockAlert size="18" className="text-warning-500" />
-        case "unfired":
+        case "Unfired":
             return <Component size="18" className="text-default-500" />
         default:
             return <Component size="18" className="text-default-500" />
@@ -21,11 +21,11 @@ export function ModuleIcon({ status }: { status?: ModuleStatus }) {
 }
 
 function Status({ status }: { status: ModuleStatus }) {
-    if (status.tag === "fired")
+    if (status.tag === "Fired")
         return <Code color="success">Fired: {status.latency}ms</Code>
-    else if (status.tag === "failed")
+    else if (status.tag === "Failed")
         return <Code color="danger" className="max-w-lg text-wrap">Failed: {status.error}</Code>
-    else if (status.tag === "timed")
+    else if (status.tag === "Timed")
         return <Code color="warning">Timed: {status.latency}ms</Code>
     else
         return <Code color="default">Unfired</Code>
@@ -39,15 +39,15 @@ type KomodoModuleMetadata = {
     retrievalFeatures: string[]
 }
 
-function KomodoModuleContextView({ metadata }: { metadata?: ModuleMetadata<KomodoModuleMetadata> }) {
-    if (!metadata?.context || metadata.context.tag !== "komodo-model") return null
+function KomodoModuleContextView({ metadata, context }: { metadata?: ComponentMetadata, context?: KomodoModuleMetadata }) {
+    if (!context || context.tag !== "komodo-model") return null
 
     return <div className="mt-3">
         <Accordion variant="splitted">
             <AccordionItem key="1" aria-label="Model Metadata" title="Model Metadata" startContent={<FileText />}>
             
                 <ScrollShadow style={{ maxHeight: '500px' }}>
-                    <JsonView src={metadata.context} />
+                    <JsonView src={context} />
                 </ScrollShadow>
             </AccordionItem>
         </Accordion>
@@ -61,7 +61,7 @@ type KomodoStatusContext = {
 }
 
 function KomodoStatusContextView({ status }: { status?: ModuleStatus<KomodoStatusContext> }) {
-    if (status?.tag !== "fired" || !status.context || status.context.tag !== "komodo-model") return null
+    if (status?.tag !== "Fired" || !status.context || status.context.tag !== "komodo-model") return null
     return <div className="mt-3">
         <Accordion variant="splitted">
             <AccordionItem key="1" aria-label="Features" title="Features" startContent={<Telescope />}>
@@ -76,7 +76,7 @@ function KomodoStatusContextView({ status }: { status?: ModuleStatus<KomodoStatu
 interface DataNodeInfoProps {
     dag: DagSpec
     spec: ModuleNodeSpec
-    context?: EngineContext
+    context?: RuntimeState
     status?: ModuleStatus
 }
 
@@ -86,8 +86,8 @@ export default function ModuleNodeInfoView({ dag, spec, context, status }: DataN
             <div className="flex flex-row gap-2 items-center">
                 <ModuleIcon status={status} />
                 <div className="flex flex-row gap-1">
-                    <p className="text-lg font-bold">{spec.name}</p>
-                    <small className="block text-default-500">v{spec.metadata.version}</small>
+                    <p className="text-lg font-bold">{spec.metadata.name}</p>
+                    <small className="block text-default-500">v{spec.metadata.majorVersion}.{spec.metadata.minorVersion}</small>
                 </div>
             </div>
         </CardHeader>

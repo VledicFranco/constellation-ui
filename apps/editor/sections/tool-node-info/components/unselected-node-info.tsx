@@ -1,4 +1,4 @@
-import { cTypeToString, DagSpec, EngineContext } from "@/apps/common/dag-dsl";
+import { cTypeToString, DagSpec, RuntimeState } from "@/apps/common/dag-dsl";
 import { Button } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { ModuleIcon } from "./module-node-info";
@@ -6,7 +6,7 @@ import { DataIcon } from "./data-node-info";
 
 interface UnselectedNodeInfoProps {
     dag: DagSpec
-    context?: EngineContext
+    context?: RuntimeState
     onNodeSelect?: (nodeId: string) => void
 }
 
@@ -22,8 +22,8 @@ export default function UnselectedNodeInfo({ dag, context, onNodeSelect }: Unsel
                     <Button className="border-secondary-300" variant="bordered" radius="sm" key={nodeId} onPress={() => onNodeSelect?.(nodeId)}>
                         <ModuleIcon status={context?.moduleStatus[nodeId]} />
                         <div className="flex flex-row gap-1">
-                            <p className="text-lg font-bold">{node.name}</p>
-                            <small className="block text-default-500">v{node.metadata.version}</small>
+                            <p className="text-lg font-bold">{node.metadata.name}</p>
+                            <small className="block text-default-500">v{node.metadata.majorVersion}.{node.metadata.minorVersion}</small>
                         </div>
                     </Button>
                 ))}
@@ -32,7 +32,7 @@ export default function UnselectedNodeInfo({ dag, context, onNodeSelect }: Unsel
             <div className="flex flex-col gap-2 items-start">
                 {Object.entries(dag.data).map(([nodeId, node]) => (
                     <Button className="border-primary-200" variant="bordered" radius="sm" key={nodeId} onPress={() => onNodeSelect?.(nodeId)}>
-                        <DataIcon value={context?.loadedData[nodeId]} />
+                        <DataIcon value={context?.data[nodeId]} />
                         <p className="text-lg font-bold text-default-600 pl-1">{node.name}</p>
                         <p className="text-lg text-default-500 font-mono">:{cTypeToString(node.cType)}</p>
                     </Button>

@@ -1,20 +1,20 @@
 import { create } from "zustand"
 import * as R from 'remeda'
-import { CValue, DagSpec, DataNodeSpec, EngineContext, getDagInputs } from "@/apps/common/dag-dsl"
+import { CValue, DagSpec, DataNodeSpec, RuntimeState, getDagInputs } from "@/apps/common/dag-dsl"
 import { cTypeDefaultValue } from "./tool-dag-runner-dsl"
 
 export type ToolDagRunnerState = {
     values: Record<string, [string, CValue]>
     specs: [string, DataNodeSpec][]
-    engineContext?: EngineContext
+    engineContext?: RuntimeState
     isSubmitting: boolean
     getValue(uuid: string): [string, CValue] | undefined
     setValue(uuid: string, value: CValue): void
     resetValues(): void
     forgetValues(uuid: string): void
     setInputSpecs(dag: DagSpec): void
-    setEngineContext(engineContext?: EngineContext): void
-    runDag(callback: (inputs: Record<string, CValue>) => Promise<EngineContext>): Promise<void>
+    setEngineContext(engineContext?: RuntimeState): void
+    runDag(callback: (inputs: Record<string, CValue>) => Promise<RuntimeState>): Promise<void>
 }
 
 export const useToolDagRunnerState = create<ToolDagRunnerState>()((set, get) => ({
@@ -51,13 +51,13 @@ export const useToolDagRunnerState = create<ToolDagRunnerState>()((set, get) => 
         set({ specs, values })
     },
 
-    setEngineContext: (engineContext?: EngineContext) =>
+    setEngineContext: (engineContext?: RuntimeState) =>
         set({ engineContext }),
 
     setIsSubmitting: (isSubmitting: boolean) => 
         set({ isSubmitting }),
 
-    runDag: async (callback: (inputs: Record<string, CValue>) => Promise<EngineContext>) => {
+    runDag: async (callback: (inputs: Record<string, CValue>) => Promise<RuntimeState>) => {
         const state = get()
         set({ isSubmitting: true })
         try {

@@ -1,4 +1,4 @@
-import { CValue, DagSpec, emptyDag, EngineContext, ModuleNodeSpec } from "@/apps/common/dag-dsl"
+import { CValue, DagSpec, emptyDag, RuntimeState, ModuleNodeSpec } from "@/apps/common/dag-dsl"
 import { applyEdgeChanges, Edge, EdgeChange, NodeChange } from "@xyflow/react"
 import { useEffect } from "react"
 import * as R from "remeda"
@@ -11,7 +11,7 @@ export type GraphAreaState = {
     dag: DagSpec
     nodes: RenderedNode[]
     edges: Edge[]
-    context?: EngineContext
+    context?: RuntimeState
     selectedNodeId?: string
     displayedTool?: string
     preferredLayout: LayoutDirection 
@@ -29,7 +29,7 @@ export type GraphAreaState = {
     addModuleToDag: (module: ModuleNodeSpec) => Promise<void>
     deleteNodeModule: (id: string) => void
     canBeDeleted: ({ nodes, edges }: Graph) => Promise<boolean | Graph>
-    runDagWithInputs: (inputs: Record<string, CValue>) => Promise<EngineContext>
+    runDagWithInputs: (inputs: Record<string, CValue>) => Promise<RuntimeState>
     cleanEngineContext: () => void
 }
 
@@ -113,10 +113,10 @@ export const useGraphAreaStore = create<GraphAreaState>()(
 
         runDagWithInputs: async (inputs: Record<string, CValue>) => {
             const state = get()
-            const context = await EditorBackendApi.runDag(state.dag.name, inputs)
+            const context = await EditorBackendApi.runDag(state.dag.metadata.name, inputs)
             const newNodes: RenderedNode[] = state.nodes.map((node) => {
                 if (node.type == "data" && node.data.tag == "data") {
-                    return { ...node, data: { ...node.data, value: context.loadedData[node.id] } }
+                    return { ...node, data: { ...node.data, value: context.data[node.id] } }
                 } else if (node.type == "module" && node.data.tag == "module") {
                     return {...node, data: { ...node.data, status: context.moduleStatus[node.id] }}
                 } else 

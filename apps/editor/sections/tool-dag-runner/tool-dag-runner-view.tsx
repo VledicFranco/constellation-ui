@@ -18,7 +18,7 @@ import { FormEvent, useEffect } from "react";
 import JsonView from 'react18-json-view';
 import 'react18-json-view/src/style.css';
 
-import { CValue, cValueInt, cValueString, DagSpec, DataNodeSpec, EngineContext } from "@/apps/common/dag-dsl";
+import { CValue, cValueInt, cValueString, DagSpec, DataNodeSpec, RuntimeState } from "@/apps/common/dag-dsl";
 import { ToolDagRunnerState, useToolDagRunnerState } from "./tool-dag-runner-state";
 
 interface CInputProps {
@@ -28,14 +28,14 @@ interface CInputProps {
 }
 
 function CInput({ uuid, spec, state }: CInputProps) {
-    if (spec.cType.tag === "string")
+    if (spec.cType.tag === "CString")
         return <CStringInput
             uuid={uuid}
             name={spec.name}
             value={state.getValue(uuid)?.[1]}
             onValueChange={state.setValue}
         />;
-    else if (spec.cType.tag === "integer")
+    else if (spec.cType.tag === "CInt")
         return <CNumberInput
             uuid={uuid}
             name={spec.name}
@@ -54,7 +54,7 @@ interface InputProps {
 }
 
 function CStringInput({ uuid, name, value, onValueChange }: InputProps) {
-    if (value?.tag !== "string")
+    if (value?.tag !== "CString")
         throw new Error(`Expected CValue to be of type 'string', but got ${value?.tag}`)
     return <Input
         key={uuid}
@@ -67,7 +67,7 @@ function CStringInput({ uuid, name, value, onValueChange }: InputProps) {
 }
 
 function CNumberInput({ uuid, name, value, onValueChange }: InputProps) {
-    if (value?.tag !== "integer")
+    if (value?.tag !== "CInt")
         throw new Error(`Expected CValue to be of type 'integer' but got ${value?.tag}`)
     return <NumberInput
         key={uuid}
@@ -85,7 +85,7 @@ function CNumberInput({ uuid, name, value, onValueChange }: InputProps) {
 
 interface ToolDagRunnerViewProps {
     dag: DagSpec
-    onRun: (values: Record<string, CValue>) => Promise<EngineContext>
+    onRun: (values: Record<string, CValue>) => Promise<RuntimeState>
     onReset: () => void
 }
 
